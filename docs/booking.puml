@@ -1,0 +1,59 @@
+@startuml
+!theme plain
+
+entity "rooms" <<Collection>> {
+  * _id : ObjectID
+  --
+  * name: String
+  * description: String
+  * capacity: Integer
+  * availability: Array<>(availabilities)
+  * exceptions: Array<>(exceptions)
+  * reservations: Array<>(ObjectID)
+}
+
+entity "availabilities" <<Embedded>> {
+  * _id : ObjectID
+  --
+  * day: Integer
+  * open: Integer
+  * close: Integer
+}
+' day: 0 (Sunday) - 6 (Saturday)
+' open/close 08:00 (480 min) - 18:00 (1080 min)
+entity "exceptions" <<Embedded>> {
+  * _id : ObjectID
+  --
+  * date: Date
+  * open: Integer
+  * close: Integer
+}
+
+entity "reservations" <<Collection>> {
+  * _id : ObjectID
+  --
+  * subject: String
+  * date: Date
+  * open: Integer
+  * close: Integer
+  * participants: Array<>(participants)
+}
+
+entity "participants" <<Embedded>> {
+  * _id : ObjectID
+  --
+  * internal: Boolean
+  * code: Integer?
+  * role: String?
+  * enterprise: String?
+  * name: String
+  * email: String
+  * phone: String
+}
+
+availabilities ||--|{ rooms : embedded
+exceptions ||--|{ rooms : embedded
+reservations }|--|| rooms : referenciado
+reservations ||--|{ participants : embedded
+
+@enduml

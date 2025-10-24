@@ -7,20 +7,15 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev-koa": "npx nodemon index.js --ignore public/* --ignore src/*",
     "dev": "npm run dev-koa & npm run svelte",
-    "svelte": "rollup -c -w",
-    "db:new": "npx dbmate -d \"db/migrations\" -e \"DB\" new ",
-    "db:up": "npx dbmate -d \"db/migrations\" -e \"DB\" up",
-    "db:rollback": "npx dbmate -d \"db/migrations\" -e \"DB\" rollback",
-    "db:dump": "npx dbmate -d \"db/migrations\" -e \"DB\" dump "
+    "svelte": "rollup -c -w"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "description": "",
   "dependencies": {
-    "better-sqlite3": "^12.4.1",
+    "axios": "^1.6.0",
     "bootstrap": "^5.3.3",
-    "dbmate": "^2.15.0",
     "debug": "~2.6.9",
     "dotenv": "^17.2.3",
     "font-awesome": "^4.7.0",
@@ -31,14 +26,13 @@
     "koa-router": "^14.0.0",
     "koa-session": "^7.0.2",
     "koa-static": "^5.0.0",
-    "sequelize": "^6.37.7",
+    "mongoose": "^8.19.2",
     "simplemde": "^1.11.2",
     "sirv-cli": "^2.0.0",
-    "sqlite3": "^5.1.7",
     "svelte": "^4.2.18",
     "svelte-app": "file:",
     "svelte-routing": "^2.13.0",
-    "axios": "^1.6.0"
+    "validator": "^13.15.15"
   },
   "devDependencies": {
     "@rollup/plugin-commonjs": "^24.0.0",

@@ -1,52 +1,96 @@
-<script></script>
+<script>
+  let activeTab = 'inicio';
+  
+  const tabs = [
+    { id: 'inicio', label: 'Inicio' },
+    { id: 'servicios', label: 'Servicios' },
+    { id: 'contacto', label: 'Contacto' }
+  ];
 
-<style></style>
+  function setActiveTab(tabId) {
+    activeTab = tabId;
+  }
+</script>
 
-<!-- Hero Section -->
-<header class="bg-primary text-white text-center py-5">
-  <div class="container">
-    <h1>Bienvenido a Mi Sitio</h1>
-    <p class="lead">Explora nuestros servicios y conoce más sobre nosotros</p>
-    <a href="#services" class="btn btn-light btn-lg mt-3">Ver Servicios</a>
-  </div>
-</header>
+<div class="tabs-container">
+  <!-- Navegación de pestañas -->
+  <nav class="tabs-navigation">
+    {#each tabs as tab}
+      <button
+        class="tab-button {activeTab === tab.id ? 'active' : ''}"
+        on:click={() => setActiveTab(tab.id)}
+      >
+        {tab.label}
+      </button>
+    {/each}
+  </nav>
 
-<!-- Sección Acerca de -->
-<section id="about" class="py-5">
-  <div class="container">
-    <h2 class="text-center mb-4">Acerca de Nosotros</h2>
-    <p class="text-center">Somos una empresa comprometida con la excelencia y dedicados a brindar soluciones personalizadas a nuestros clientes.</p>
+  <!-- Contenido de las pestañas -->
+  <div class="tab-content">
+    {#if activeTab === 'inicio'}
+      <div class="tab-pane active">
+        <h2>Bienvenido a la página de Inicio</h2>
+        <p>Este es el contenido de la pestaña de inicio.</p>
+      </div>
+    {:else if activeTab === 'servicios'}
+      <div class="tab-pane active">
+        <h2>Nuestros Servicios</h2>
+        <ul>
+          <li>Desarrollo Web</li>
+          <li>Consultoría</li>
+          <li>Diseño UI/UX</li>
+        </ul>
+      </div>
+    {:else if activeTab === 'contacto'}
+      <div class="tab-pane active">
+        <h2>Contacto</h2>
+        <p>Email: info@ejemplo.com</p>
+        <p>Teléfono: +123456789</p>
+      </div>
+    {/if}
   </div>
-</section>
-<!-- Sección Servicios -->
-<section id="services" class="bg-light py-5">
-  <div class="container">
-    <h2 class="text-center mb-4">Nuestros Servicios</h2>
-    <div class="row">
-      <div class="col-md-4 text-center">
-        <div class="card p-4">
-          <div class="card-body">
-            <h5 class="card-title">Servicio 1</h5>
-            <p class="card-text">Descripción breve del servicio 1.</p>
-          </div>
-        </div>
-      </div>
-      <div class="col-md-4 text-center">
-        <div class="card p-4">
-          <div class="card-body">
-            <h5 class="card-title">Servicio 2</h5>
-            <p class="card-text">Descripción breve del servicio 2.</p>
-          </div>
-        </div>
-      </div>
-      <div class="col-md-4 text-center">
-        <div class="card p-4">
-          <div class="card-body">
-            <h5 class="card-title">Servicio 3</h5>
-            <p class="card-text">Descripción breve del servicio 3.</p>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
+</div>
+
+<style>
+  .tabs-container {
+    
+  }
+
+  .tabs-navigation {
+    display: flex;
+    border-bottom: 2px solid #e0e0e0;
+    margin-bottom: 20px;
+  }
+
+  .tab-button {
+    padding: 12px 24px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 16px;
+    color: #666;
+    border-bottom: 3px solid transparent;
+    transition: all 0.3s ease;
+  }
+
+  .tab-button:hover {
+    color: var(--bs-primary);
+    background-color: #f8f9fa;
+  }
+
+  .tab-button.active {
+    color: var(--bs-primary);
+    border-bottom-color: var(--bs-primary);
+    font-weight: bold;
+  }
+
+  .tab-pane {
+    padding: 20px;
+    animation: fadeIn 0.3s ease-in;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+</style>

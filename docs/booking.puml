@@ -36,6 +36,7 @@ entity "reservations" <<Collection>> {
   * date: Date
   * open: Integer
   * close: Integer
+  * organizer: (participants)
   * participants: Array<>(participants)
 }
 
@@ -55,5 +56,6 @@ availabilities ||--|{ rooms : embedded
 exceptions ||--|{ rooms : embedded
 reservations }|--|| rooms : referenciado
 reservations ||--|{ participants : embedded
+reservations ||--|| participants : embedded
 
 @enduml

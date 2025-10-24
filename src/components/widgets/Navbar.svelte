@@ -8,7 +8,7 @@
   const signOut = (e) => {
     let name = 'authToken';
     document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/; secure; samesite=strict`;
-    window.location.replace('/user/sign-out');
+    window.location.replace('/sign-out');
   }
 
   onMount(() => {
@@ -21,31 +21,51 @@
   });
 </script>
 
-<style></style>
+<style>
+  .sign-out-btn {
+    color: rgba(255, 255, 255, 0.9) !important;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 4px;
+    padding: 6px 12px;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    margin-left: auto;
+  }
+  
+  .sign-out-btn:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    color: white !important;
+    border-color: rgba(255, 255, 255, 0.5);
+  }
+  
+  .navbar-nav {
+    width: 100%;
+    display: flex;
+    align-items: center;
+  }
+</style>
 
-<nav class="navbar navbar-expand px-3 border-bottom">
-  <button class="btn" id="sidebar-toggle" type="button">
-    <span class="navbar-toggler-icon"></span>
-  </button>
-  <div class="navbar-collapse navbar">
-    <ul class="navbar-nav">
-      <li class="nav-item dropdown">
-        <a href="/" data-bs-toggle="dropdown" class="nav-icon pe-md-0">
-          <!-- Verificar si session y session.jwt están definidos -->
-          {#if session && session.image_url}
-            <img src="{session.image_url}" class="avatar img-fluid rounded" alt="">
-          {:else}
-            <img src="/img/profile.jpg" class="avatar img-fluid rounded" alt="">
-          {/if}
-        </a>
-        <div class="dropdown-menu dropdown-menu-end">
-          <a class="dropdown-item" href="/profile" on:click|preventDefault={() => {navigate('/profile')}}>
-            Mi Perfil
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+  <div class="container-fluid">
+    <!-- Marca/Logo -->
+    <a class="navbar-brand" href="/">Booking UL</a>
+
+    <!-- Botón para dispositivos móviles -->
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <!-- Contenido colapsable -->
+    <div class="collapse navbar-collapse" id="navbarNav">
+      <ul class="navbar-nav">
+        
+        <!-- Botón de cerrar sesión pegado a la derecha -->
+        <li class="nav-item ms-auto">
+          <a class="nav-link sign-out-btn" href="/sign-out" on:click|preventDefault={signOut}>
+            Cerrar Sesión
           </a>
-          <a href="/" class="dropdown-item">Setting</a>
-          <a class="dropdown-item" on:click|preventDefault={signOut} href="/user/sign-out">Salir</a>
-        </div>
-      </li>
-    </ul>
+        </li>
+      </ul>
+    </div>
   </div>
 </nav>

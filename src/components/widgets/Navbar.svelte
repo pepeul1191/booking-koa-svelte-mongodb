@@ -58,6 +58,12 @@
     <!-- Contenido colapsable -->
     <div class="collapse navbar-collapse" id="navbarNav">
       <ul class="navbar-nav">
+        <li class="nav-item">
+          <a class="nav-link" aria-current="page" href="/">Inicio</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" aria-current="page" href="/user">Simular Usuario</a>
+        </li>
         
         <!-- Botón de cerrar sesión pegado a la derecha -->
         <li class="nav-item ms-auto">

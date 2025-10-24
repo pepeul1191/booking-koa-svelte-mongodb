@@ -1,10 +1,13 @@
 <script>
   let activeTab = 'inicio';
+	import Reservations from './Reservations.svelte';
+  import Rooms from './Rooms.svelte';
+  import Wellcome from './Wellcome.svelte';
   
   const tabs = [
     { id: 'inicio', label: 'Inicio' },
-    { id: 'servicios', label: 'Servicios' },
-    { id: 'contacto', label: 'Contacto' }
+    { id: 'rooms', label: 'Ambientes' },
+    { id: 'reservations', label: 'Reservaciones' }
   ];
 
   function setActiveTab(tabId) {
@@ -29,23 +32,15 @@
   <div class="tab-content">
     {#if activeTab === 'inicio'}
       <div class="tab-pane active">
-        <h2>Bienvenido a la página de Inicio</h2>
-        <p>Este es el contenido de la pestaña de inicio.</p>
+        <Wellcome />
       </div>
-    {:else if activeTab === 'servicios'}
+    {:else if activeTab === 'rooms'}
       <div class="tab-pane active">
-        <h2>Nuestros Servicios</h2>
-        <ul>
-          <li>Desarrollo Web</li>
-          <li>Consultoría</li>
-          <li>Diseño UI/UX</li>
-        </ul>
+        <Rooms />
       </div>
-    {:else if activeTab === 'contacto'}
+    {:else if activeTab === 'reservations'}
       <div class="tab-pane active">
-        <h2>Contacto</h2>
-        <p>Email: info@ejemplo.com</p>
-        <p>Teléfono: +123456789</p>
+        <Reservations />
       </div>
     {/if}
   </div>

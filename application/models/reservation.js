@@ -1,7 +1,6 @@
 // models/reservation.js
 import mongoose from 'mongoose';
-import { participantSchema } from './Participant.js';
-import { isEmail } from 'validator';
+import { participantSchema } from './participant.js';
 
 const reservationSchema = new mongoose.Schema({
   subject: {

@@ -189,13 +189,13 @@ h4 {
     opacity: 0.65;
 }
 
-.card{
+.card, .card-header:first-child{
     border-radius: 0px;
-    border: var(--bs-card-border-width) solid var(--bs-card-border-color) !important;
 }
 
 .card-header, .card-body{
     padding: 10px;
+    border-radius: 0px;
 }
 
 .card-title{

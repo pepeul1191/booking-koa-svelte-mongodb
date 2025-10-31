@@ -1,7 +1,7 @@
 // models/room.js
 import mongoose from 'mongoose';
-import { availabilitySchema } from './Availability.js';
-import { exceptionSchema } from './Exception.js';
+import { Availability } from './availability.js';
+import { Exception } from './exception.js';
 
 const roomSchema = new mongoose.Schema({
   name: {
@@ -25,7 +25,7 @@ const roomSchema = new mongoose.Schema({
     }
   },
   availability: {
-    type: [availabilitySchema],
+    type: [Availability],
     required: true,
     validate: {
       validator: function(availabilities) {
@@ -36,13 +36,14 @@ const roomSchema = new mongoose.Schema({
       message: 'Duplicate days in availability schedule'
     }
   },
-  exceptions: [exceptionSchema],
+  exceptions: [Exception],
   reservationIds: [{
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Reservation'
   }]
 }, {
-  timestamps: true
+  timestamps: true,
+  collection: 'rooms'
 });
 
 // Índices para mejor performance

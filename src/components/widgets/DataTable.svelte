@@ -36,7 +36,8 @@
     display: false,
     step: 10,
     totalPages: 0,
-    actualPage: 0
+    actualPage: 0,
+    listKey: 'list',
   };
   export let queryParams = {}
   export let messages = {
@@ -327,9 +328,10 @@
   export const list = () => {
     // if pagation, add query params
     if(pagination.display){
-      queryParams.step = pagination.step;
+      queryParams.per_page = pagination.step;
       queryParams.page = pagination.actualPage;
     }
+
     if(fetchURL){
       axios.get( // url, data, headers
         fetchURL, 
@@ -341,15 +343,28 @@
         },
       )
       .then(function (response) {
+        console.log(response);
+
+        let responseData = response.data;
+
         data = [];
         if(pagination.display){
-          data = response.data.list;
-          pagination.totalPages = response.data.pages;
-          pagination.offset = response.data.offset + 1;
-          pagination.total = response.data.total;
+          console.log('+++++++++++++++++++++++++');
+          console.log(responseData.data);
+          data = responseData.data[pagination.listKey];
+          pagination.totalPages = responseData.data.pagination.pages;
+          pagination.offset = responseData.data.pagination.start_record;
+          pagination.total = responseData.data.pagination.records;
           pagination.limit = pagination.offset + pagination.step - 1 > pagination.total ? pagination.total : pagination.offset + pagination.step - 1; 
+          
+          /*data = responseData.data;
+          pagination.totalPages = responseData.data.pages;
+          pagination.offset = responseData.data.offset + 1;
+          pagination.total = responseData.data.total;
+          pagination.limit = pagination.offset + pagination.step - 1 > pagination.total ? pagination.total : pagination.offset + pagination.step - 1; */
         }else{
-          data = response.data;
+          console.log(responseData.data)
+          data = responseData.data;
         }
       })
       .catch(function (error) {
@@ -429,6 +444,10 @@
 
   th > .form-check-input{
     margin-left: 10px;
+  }
+
+  .page-link{
+    color: var(--bs-primary);
   }
 </style>
 <!-- modal -->

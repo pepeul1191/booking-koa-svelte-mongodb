@@ -3,11 +3,13 @@
 	import Reservations from './Reservations.svelte';
   import Rooms from './Rooms.svelte';
   import Wellcome from './Wellcome.svelte';
+  import Calendar from './Calendar.svelte';
   
   const tabs = [
     { id: 'inicio', label: 'Inicio' },
     { id: 'rooms', label: 'Ambientes' },
-    { id: 'reservations', label: 'Reservaciones' }
+    { id: 'reservations', label: 'Reservaciones' },
+    { id: 'calendar', label: 'Calendario' },
   ];
 
   function setActiveTab(tabId) {
@@ -42,6 +44,10 @@
       <div class="tab-pane active">
         <Reservations />
       </div>
+    {:else if activeTab === 'calendar'}
+      <div class="tab-pane active">
+        <Calendar />
+      </div>
     {/if}
   </div>
 </div>
@@ -54,7 +60,6 @@
   .tabs-navigation {
     display: flex;
     border-bottom: 2px solid #e0e0e0;
-    margin-bottom: 20px;
   }
 
   .tab-button {

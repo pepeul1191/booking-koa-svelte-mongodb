@@ -1,6 +1,5 @@
 // models/participant.js
 import mongoose from 'mongoose';
-import { isEmail } from 'validator';
 
 const participantSchema = new mongoose.Schema({
   internal: {

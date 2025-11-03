@@ -87,6 +87,8 @@
   .tab-pane {
     padding: 20px;
     animation: fadeIn 0.3s ease-in;
+    padding-left: 0px;
+    padding-right: 0px;
   }
 
   @keyframes fadeIn {

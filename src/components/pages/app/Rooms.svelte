@@ -3,7 +3,7 @@
   import DataTable from '../../widgets/DataTable.svelte'; 
   // Asume que tienes un componente o función para mostrar alertas
   import Alert from '../../widgets/Alert.svelte'; 
-
+  import RoomFormModal from './RoomFormModal.svelte'; // Importa el componente del modal
   import { navigate } from 'svelte-routing'; // Asumiendo que usas svelte-routing
 
   // --- CONFIGURACIÓN DEL ENDPOINT Y AUTENTICACIÓN ---
@@ -21,6 +21,8 @@
     text: '',
     status: ''
   };
+
+  let showModal = false;
 
   // --- CONFIGURACIÓN DE LA TABLA ---
   
@@ -78,16 +80,28 @@
       },
   ];
   
-  // 7. Configuración del botón de agregar (usará la acción por defecto si no se define)
+  // 7. Configuración del botón de agregar - ahora abre el modal
   const addButtonConfig = {
     display: true,
     disabled: false,
     action: () => {
-        console.log('Navegar a creación de sala...');
-        // navigate('/rooms/new');
+      showModal = true; // Activa el modal
     },
   };
 
+  // Función para cerrar el modal
+  const handleCloseModal = () => {
+    showModal = false;
+  };
+
+  // Función para manejar el envío exitoso del formulario
+  const handleFormSuccess = () => {
+    showModal = false;
+    // Recargar los datos de la tabla después de crear una nueva sala
+    if (dataTableRef) {
+      dataTableRef.list();
+    }
+  };
   // --- FUNCIONES DE EVENTO ---
 
   // Función para manejar mensajes de alerta del DataTable
@@ -113,40 +127,48 @@
 </script>
 
 <div class="container">
-    <div class="card">
-        <div class="card-header bg-white">
-            <h6 class="mb-0">🏢 Listado de Salas Disponibles</h6>
-        </div>
-        <div class="card-body">
-            
-            {#if alertMessage.text}
-                <Alert status={alertMessage.status} text={alertMessage.text} />
-            {/if}
-
-            <DataTable
-                bind:this={dataTableRef}
-                
-                {fetchURL}
-                {jwtToken}
-                
-                {columnKeys}
-                {columnNames}
-                {columnTypes}
-                
-                bind:pagination={paginationConfig}
-                
-                {actionButtons}
-
-                {columnStyles}
-                
-                addButton={addButtonConfig}
-
-                on:alert={handleAlert}
-                
-                saveButton={{ display: false }} 
-                
-                recordId="_id"
-            />
-        </div>
+  <div class="card">
+    <div class="card-header bg-white">
+      <h6 class="mb-0"><i class="fa fa-building"></i>  Listado de Salas Disponibles</h6>
     </div>
+    <div class="card-body">
+        
+      {#if alertMessage.text}
+        <Alert status={alertMessage.status} text={alertMessage.text} />
+      {/if}
+
+      <DataTable
+        bind:this={dataTableRef}
+        
+        {fetchURL}
+        {jwtToken}
+        
+        {columnKeys}
+        {columnNames}
+        {columnTypes}
+        
+        bind:pagination={paginationConfig}
+        
+        {actionButtons}
+
+        {columnStyles}
+        
+        addButton={addButtonConfig}
+
+        on:alert={handleAlert}
+        
+        saveButton={{ display: false }} 
+        
+        recordId="_id"
+        />
+    </div>
+
+    {#if showModal}
+      <RoomFormModal
+        on:close={handleCloseModal}
+        on:success={handleFormSuccess}
+        size="lg"
+      />
+    {/if}
+  </div>
 </div>

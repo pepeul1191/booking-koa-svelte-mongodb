@@ -7,7 +7,7 @@ entity "rooms" <<Collection>> {
   * name: String
   * description: String
   * capacity: Integer
-  * availability: Array<>(availabilities)
+  * availabilities: Array<>(availabilities)
   * exceptions: Array<>(exceptions)
   * reservations: Array<>(ObjectID)
 }

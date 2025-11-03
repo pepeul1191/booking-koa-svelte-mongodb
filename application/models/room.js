@@ -24,7 +24,7 @@ const roomSchema = new mongoose.Schema({
       message: 'Capacity must be an integer'
     }
   },
-  availability: {
+  availabilities: {
     type: [Availability],
     required: true,
     validate: {

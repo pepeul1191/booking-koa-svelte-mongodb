@@ -76,7 +76,27 @@ const getRooms = async ({
   }
 };
 
+const createRoom = async (roomData) => {
+
+  try {
+    const room = new Room({
+      name: roomData.name,
+      description: roomData.description,
+      capacity: roomData.capacity,
+      availabilities: roomData.availabilities,
+      exceptions: roomData.exceptions,
+      reservationIds: roomData.reservationIds
+    });
+
+    const savedRoom = await room.save();
+    return savedRoom;
+  } catch (error) {
+    throw error;
+  }
+}
+
 export default {
   getRooms,
+  createRoom,
 };
  

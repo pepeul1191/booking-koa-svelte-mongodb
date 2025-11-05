@@ -38,6 +38,92 @@ router.get('/api/v1/rooms', async (ctx) => {
   }
 });
 
+router.post('/api/v1/rooms', async (ctx) => {
+  try {
+    const roomData = ctx.request.body;
+
+    // Validar que los datos requeridos estén presentes
+    if (!roomData.name || !roomData.description || !roomData.capacity) {
+      ctx.status = 400;
+      ctx.body = {
+        success: false,
+        message: 'Faltan campos requeridos: name, description o capacity',
+        timestamp: new Date().toISOString()
+      };
+      return;
+    }
+
+    // Preparar los datos para el modelo Room
+    const roomToCreate = {
+      name: roomData.name.trim(),
+      description: roomData.description.trim(),
+      capacity: parseInt(roomData.capacity),
+      availabilities: roomData.availabilities || [],
+      exceptions: (roomData.exceptions || []).map(exp => ({
+        ...exp,
+        date: new Date(exp.date) // Convertir string a Date
+      })),
+      reservationIds: [] // Mapear reservations a reservationIds
+    };
+
+    // Validar que capacity sea un número entero válido
+    if (isNaN(roomToCreate.capacity) || roomToCreate.capacity < 1) {
+      ctx.status = 400;
+      ctx.body = {
+        success: false,
+        message: 'Capacity debe ser un número entero mayor o igual a 1',
+        timestamp: new Date().toISOString()
+      };
+      return;
+    }
+
+    // Crear la sala usando el servicio
+    const createdRoom = await roomsService.createRoom(roomToCreate);
+
+    ctx.status = 201;
+    ctx.body = {
+      success: true,
+      data: createdRoom,
+      message: 'Sala creada exitosamente',
+      timestamp: new Date().toISOString()
+    };
+
+  } catch (error) {
+    console.log(error)
+    // Manejar errores de validación de Mongoose
+    if (error.name === 'ValidationError') {
+      const errors = Object.values(error.errors).map(err => err.message);
+      ctx.status = 400;
+      ctx.body = {
+        success: false,
+        message: 'Error de validación',
+        errors: errors,
+        timestamp: new Date().toISOString()
+      };
+      return;
+    }
+
+    // Manejar errores de duplicados u otros errores
+    if (error.code === 11000 || error.message.includes('duplicate')) {
+      ctx.status = 409;
+      ctx.body = {
+        success: false,
+        message: 'Ya existe una sala con ese nombre',
+        timestamp: new Date().toISOString()
+      };
+      return;
+    }
+
+    ctx.status = 500;
+    ctx.body = {
+      success: false,
+      message: 'Error interno del servidor',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined,
+      timestamp: new Date().toISOString()
+    };
+  }
+});
+
 /*
 router.get('/api/v1/systems/:id', async (ctx) => {
   const { id } = ctx.params; 

@@ -95,8 +95,16 @@
   };
 
   // Función para manejar el envío exitoso del formulario
-  const handleFormSuccess = () => {
+  const handleFormSuccess = (event) => {
     showModal = false;
+    // mostrar alerta
+    console.log(event)
+    alertMessage.text = 'Se ha creado la sala exitosamente.';
+    alertMessage.status = 'success';
+    // Opcional: Limpiar el mensaje después de X segundos
+    setTimeout(() => {
+        alertMessage = { text: '', status: '' };
+    }, 5000); 
     // Recargar los datos de la tabla después de crear una nueva sala
     if (dataTableRef) {
       dataTableRef.list();

@@ -2,6 +2,7 @@
 <script>
   import { onMount, createEventDispatcher } from 'svelte';
   import { createRoom } from '../../../services/room_service.js'; // Ajusta la ruta
+  import Alert from '../../widgets/Alert.svelte'; 
   
   // Props del componente
   export let size = 'lg';
@@ -70,7 +71,9 @@
   
   const addAvailability = () => {
     if (newAvailability.open >= newAvailability.close) {
-      alert('La hora de apertura debe ser anterior a la de cierre');
+      alertMessage.text = 'La hora de apertura debe ser anterior a la de cierre';
+      alertMessage.status = 'danger';
+      closeAlert();
       return;
     }
     
@@ -90,7 +93,9 @@
 
   const updateAvailability = () => {
     if (newAvailability.open >= newAvailability.close) {
-      alert('La hora de apertura debe ser anterior a la de cierre');
+      alertMessage.text = 'La hora de apertura debe ser anterior a la de cierre';
+      alertMessage.status = 'danger';
+      closeAlert();
       return;
     }
     
@@ -121,12 +126,16 @@
   
   const addException = () => {
     if (!newException.date) {
-      alert('La fecha es requerida');
+      alertMessage.text = 'La fecha es requerida';
+      alertMessage.status = 'danger';
+      closeAlert();
       return;
     }
     
     if (newException.open >= newException.close) {
-      alert('La hora de apertura debe ser anterior a la de cierre');
+      alertMessage.text = 'La hora de apertura debe ser anterior a la de cierre';
+      alertMessage.status = 'danger';
+      closeAlert();
       return;
     }
     
@@ -149,12 +158,16 @@
 
   const updateException = () => {
     if (!newException.date) {
-      alert('La fecha es requerida');
+      alertMessage.text = 'La fecha es requerida';
+      alertMessage.status = 'danger';
+      closeAlert();
       return;
     }
     
     if (newException.open >= newException.close) {
-      alert('La hora de apertura debe ser anterior a la de cierre');
+      alertMessage.text = 'La hora de apertura debe ser anterior a la de cierre';
+      alertMessage.status = 'danger';
+      closeAlert();
       return;
     }
     
@@ -206,15 +219,25 @@
     dispatch('close');
   };
 
+  const closeAlert = () => {
+    setTimeout(() => {
+      alertMessage = { text: '', status: '' };
+    }, 5000); 
+  };
+
   const submitForm = async () => {
     // Validaciones básicas
     if (!formData.name.trim()) {
-      alert('El nombre de la sala es requerido');
+      alertMessage.text = 'El nombre de la sala es requerido';
+      alertMessage.status = 'danger';
+      closeAlert();
       return;
     }
     
     if (!formData.capacity || formData.capacity < 1) {
-      alert('La capacidad debe ser mayor a 0');
+      alertMessage.text = 'La capacidad debe ser mayor a 0';
+      alertMessage.status = 'danger';
+      closeAlert();
       return;
     }
     
@@ -240,11 +263,9 @@
       
     } catch (error) {
       // Manejar el error (ya se imprime en la consola en la función createRoom)
-      alert('Error al crear la sala. Por favor, intente nuevamente.');
+      alertMessage.text = 'Error al crear la sala. Por favor, intente nuevamente.';
+      alertMessage.status = 'danger';
     }
-    
-    // Emitir éxito
-    dispatch('success', { data: formData });
   };
 
   // Cerrar modal con tecla Escape
@@ -256,6 +277,11 @@
     window.addEventListener('keydown', handleEscape);
     return () => window.removeEventListener('keydown', handleEscape);
   });
+
+  let alertMessage = {
+    text: '',
+    status: ''
+  };
 </script>
 
 <div class="modal fade show d-block" tabindex="-1" role="dialog" style="background-color: rgba(0, 0, 0, 0.5)">
@@ -267,6 +293,10 @@
       </div>
       
       <div class="modal-body">
+        {#if alertMessage.text}
+          <Alert status={alertMessage.status} text={alertMessage.text} />
+        {/if}
+
         <!-- Información Básica -->
         <div class="row mb-4">
           <div class="col-md-6">

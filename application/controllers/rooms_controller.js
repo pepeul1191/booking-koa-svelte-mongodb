@@ -1,6 +1,7 @@
 // application/controllers/system_controller.js
 import Router from 'koa-router';
 import roomsService from '../services/rooms_service.js'; 
+import mongoose from 'mongoose';
 
 const router = new Router();
 
@@ -104,6 +105,116 @@ router.post('/api/v1/rooms', async (ctx) => {
     }
 
     // Manejar errores de duplicados u otros errores
+    if (error.code === 11000 || error.message.includes('duplicate')) {
+      ctx.status = 409;
+      ctx.body = {
+        success: false,
+        message: 'Ya existe una sala con ese nombre',
+        timestamp: new Date().toISOString()
+      };
+      return;
+    }
+
+    ctx.status = 500;
+    ctx.body = {
+      success: false,
+      message: 'Error interno del servidor',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined,
+      timestamp: new Date().toISOString()
+    };
+  }
+});
+
+router.put('/api/v1/rooms/:id', async (ctx) => {
+  try {
+    const roomId = ctx.params.id;
+    const roomData = ctx.request.body;
+
+    // Validar que el ID sea válido
+    if (!roomId || !mongoose.Types.ObjectId.isValid(roomId)) {
+      ctx.status = 400;
+      ctx.body = {
+        success: false,
+        message: 'ID de sala no válido',
+        timestamp: new Date().toISOString()
+      };
+      return;
+    }
+
+    // Preparar los datos para la actualización
+    const updates = {};
+
+    if (roomData.name !== undefined) {
+      updates.name = roomData.name.trim();
+    }
+    if (roomData.description !== undefined) {
+      updates.description = roomData.description.trim();
+    }
+    if (roomData.capacity !== undefined) {
+      updates.capacity = parseInt(roomData.capacity);
+      // Validar que capacity sea un número entero válido
+      if (isNaN(updates.capacity) || updates.capacity < 1) {
+        ctx.status = 400;
+        ctx.body = {
+          success: false,
+          message: 'Capacity debe ser un número entero mayor o igual a 1',
+          timestamp: new Date().toISOString()
+        };
+        return;
+      }
+    }
+    if (roomData.availabilities !== undefined) {
+      updates.availabilities = roomData.availabilities;
+    }
+    if (roomData.exceptions !== undefined) {
+      updates.exceptions = roomData.exceptions.map(exp => ({
+        ...exp,
+        date: new Date(exp.date) // Convertir string a Date
+      }));
+    }
+    // Nota: reservationIds no se actualiza normalmente por esta vía, pero si se envía, se actualiza.
+    if (roomData.reservationIds !== undefined) {
+      updates.reservationIds = roomData.reservationIds;
+    }
+
+    // Actualizar la sala usando el servicio
+    const updatedRoom = await roomsService.updateRoom(roomId, updates);
+
+    // Si no se encontró la sala para actualizar, el servicio devuelve null
+    if (!updatedRoom) {
+      ctx.status = 404;
+      ctx.body = {
+        success: false,
+        message: 'Sala no encontrada',
+        timestamp: new Date().toISOString()
+      };
+      return;
+    }
+
+    ctx.status = 200;
+    ctx.body = {
+      success: true,
+      data: updatedRoom,
+      message: 'Sala actualizada exitosamente',
+      timestamp: new Date().toISOString()
+    };
+
+  } catch (error) {
+    console.log(error);
+    // Manejar errores de validación de Mongoose
+    if (error.name === 'ValidationError') {
+      const errors = Object.values(error.errors).map(err => err.message);
+      ctx.status = 400;
+      ctx.body = {
+        success: false,
+        message: 'Error de validación',
+        errors: errors,
+        timestamp: new Date().toISOString()
+      };
+      return;
+    }
+
+    // Manejar errores de duplicados
     if (error.code === 11000 || error.message.includes('duplicate')) {
       ctx.status = 409;
       ctx.body = {

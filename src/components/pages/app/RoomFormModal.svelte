@@ -1,7 +1,7 @@
 <!-- RoomFormModal.svelte -->
 <script>
   import { onMount, createEventDispatcher } from 'svelte';
-  import { createRoom } from '../../../services/room_service.js'; // Ajusta la ruta
+  import { createRoom, editRoom } from '../../../services/room_service.js'; // Ajusta la ruta
   import Alert from '../../widgets/Alert.svelte'; 
   
   // Props del componente
@@ -255,8 +255,15 @@
     };
 
     try {
-      // Llamar a la función que hace la petición POST
-      const response = await createRoom(roomData); // Considera cambiar el nombre de esta función
+      let response;
+
+      if (formData._id) {
+        // Llamar a la función que hace la petición PUT
+        response = await editRoom(roomData, formData._id); // Considera cambiar el nombre de esta función
+      }else{
+        // Llamar a la función que hace la petición POST
+        response = await createRoom(roomData); // Considera cambiar el nombre de esta función
+      }
       
       // Si todo sale bien, emitir el evento de éxito
       dispatch('success', { data: response.data });

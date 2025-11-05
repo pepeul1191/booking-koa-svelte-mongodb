@@ -95,8 +95,19 @@ const createRoom = async (roomData) => {
   }
 }
 
+const updateRoom = async (roomId, updates) => {
+  try {
+    // { new: true } para devolver el documento actualizado
+    const updatedRoom = await Room.findByIdAndUpdate(roomId, updates, { new: true, runValidators: true });
+    return updatedRoom;
+  } catch (error) {
+    throw error;
+  }
+}
+
 export default {
   getRooms,
   createRoom,
+  updateRoom,
 };
  

@@ -11,7 +11,7 @@
   const dispatch = createEventDispatcher();
   
   // Datos del formulario
-  let formData = {
+  export let formData = {
     name: '',
     description: '',
     capacity: '',
@@ -270,6 +270,7 @@
 
   // Cerrar modal con tecla Escape
   onMount(() => {
+    console.log(formData);
     const handleEscape = (event) => {
       if (event.key === 'Escape') closeModal();
     };
@@ -288,7 +289,8 @@
   <div class="modal-dialog modal-{size}" role="document">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title">➕ Nueva Sala</h5>
+        <h5 class="modal-title">
+          <i class="fa {formData._id == null ? 'fa-plus-circle' : 'fa-pencil-square'}" style="margin-right: 10px;"></i>{formData._id == null ? 'Nueva Sala' : 'Editar Sala'} </h5>
         <button type="button" class="btn-close" on:click={closeModal} aria-label="Close"></button>
       </div>
       

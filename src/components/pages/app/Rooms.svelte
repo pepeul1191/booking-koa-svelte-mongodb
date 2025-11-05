@@ -22,6 +22,16 @@
     status: ''
   };
 
+  let emptyRoom = {
+    _id: null,
+    name: '',
+    description: '',
+    capacity: 0,
+    availabilities: [],
+    exceptions: [],
+    reservations: [] // Inicialmente vacío
+  }
+
   let showModal = false;
 
   // --- CONFIGURACIÓN DE LA TABLA ---
@@ -67,6 +77,8 @@
         action: (record) => {
           console.log(`Editando: ${record.name} (${record._id})`);
           // navigate(`/rooms/${record._id}/edit`);
+          selectedRoom = record;
+          showModal = true;
         }
       },
       {
@@ -85,6 +97,7 @@
     display: true,
     disabled: false,
     action: () => {
+      selectedRoom = emptyRoom;
       showModal = true; // Activa el modal
     },
   };
@@ -132,6 +145,8 @@
       }
     }, 0);
   });
+
+  let selectedRoom = emptyRoom;
 </script>
 
 <div class="container">
@@ -175,6 +190,7 @@
       <RoomFormModal
         on:close={handleCloseModal}
         on:success={handleFormSuccess}
+        formData={selectedRoom}
         size="lg"
       />
     {/if}

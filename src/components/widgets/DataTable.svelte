@@ -81,8 +81,9 @@
         status: ''
       };
       btnDisabledDeleteConfirmation = false;
+      list();
       deleteConfirmationInstance.hide();
-    }, 4300);
+    }, 1500);
   }
 
   export const deleteRowFromDB = () => {
@@ -103,6 +104,7 @@
         messageConfirmationModal.text = response.data.message ? response.data.message : 'Registro borrado correctamente';
         messageConfirmationModal.status = 'success';
         cleanMessage();
+        
       })
       .catch((error) => {
         messageConfirmationModal.text = error.message ? error.message : 'Registro borrado correctamente';;

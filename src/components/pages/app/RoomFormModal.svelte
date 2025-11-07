@@ -6,6 +6,8 @@
   
   // Props del componente
   export let size = 'lg';
+
+  let modal;
   
   // Disparadores de eventos
   const dispatch = createEventDispatcher();
@@ -292,7 +294,7 @@
   };
 </script>
 
-<div class="modal fade show d-block" tabindex="-1" role="dialog" style="background-color: rgba(0, 0, 0, 0.5)">
+<div class="modal fade show d-block" tabindex="-1" role="dialog" style="background-color: rgba(0, 0, 0, 0.5)" bind:this={modal}>
   <div class="modal-dialog modal-{size}" role="document">
     <div class="modal-content">
       <div class="modal-header">

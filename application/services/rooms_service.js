@@ -105,9 +105,19 @@ const updateRoom = async (roomId, updates) => {
   }
 }
 
+const deleteRoom = async (roomId) => {
+  try {
+    const deletedRoom = await Room.findByIdAndDelete(roomId);
+    return deletedRoom;
+  } catch (error) {
+    throw error;
+  }
+}
+
 export default {
   getRooms,
   createRoom,
   updateRoom,
+  deleteRoom,
 };
  

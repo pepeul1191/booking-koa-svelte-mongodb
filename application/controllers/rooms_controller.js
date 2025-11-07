@@ -235,13 +235,65 @@ router.put('/api/v1/rooms/:id', async (ctx) => {
   }
 });
 
-/*
-router.get('/api/v1/systems/:id', async (ctx) => {
-  const { id } = ctx.params; 
-  const result = await systemsService.getSystemById(id); 
-  ctx.status = result.status ? 200 : (result.error == 'NotFound' ? 404 : 500); 
-  ctx.body = result; 
+router.delete('/api/v1/rooms/:id', async (ctx) => {
+  try {
+    const roomId = ctx.params.id;
+
+    // Validar que el ID esté presente
+    if (!roomId) {
+      ctx.status = 400;
+      ctx.body = {
+        success: false,
+        message: 'ID de sala es requerido',
+        timestamp: new Date().toISOString()
+      };
+      return;
+    }
+
+    // Eliminar la sala usando el servicio
+    const deletedRoom = await roomsService.deleteRoom(roomId);
+
+    // Si no se encontró la sala
+    if (!deletedRoom) {
+      ctx.status = 404;
+      ctx.body = {
+        success: false,
+        message: 'Sala no encontrada',
+        timestamp: new Date().toISOString()
+      };
+      return;
+    }
+
+    ctx.status = 200;
+    ctx.body = {
+      success: true,
+      data: deletedRoom,
+      message: 'Sala eliminada exitosamente',
+      timestamp: new Date().toISOString()
+    };
+
+  } catch (error) {
+    console.log(error);
+    
+    // Manejar error de ID inválido de MongoDB
+    if (error.name === 'CastError') {
+      ctx.status = 400;
+      ctx.body = {
+        success: false,
+        message: 'ID de sala inválido',
+        timestamp: new Date().toISOString()
+      };
+      return;
+    }
+
+    ctx.status = 500;
+    ctx.body = {
+      success: false,
+      message: 'Error interno del servidor',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined,
+      timestamp: new Date().toISOString()
+    };
+  }
 });
-*/
 
 export default router;

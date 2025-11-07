@@ -1,19 +1,13 @@
-<!-- RoomFormModal.svelte -->
 <script>
-  import { onMount, createEventDispatcher } from 'svelte';
-  import { createRoom, editRoom } from '../../../services/room_service.js'; // Ajusta la ruta
+  import { onMount, createEventDispatcher, afterUpdate } from 'svelte';
+  import { createRoom, editRoom } from '../../../services/room_service.js';
   import Alert from '../../widgets/Alert.svelte'; 
+  import { Modal } from 'bootstrap';
   
   // Props del componente
   export let size = 'lg';
-
-  let modal;
-  
-  // Disparadores de eventos
-  const dispatch = createEventDispatcher();
-  
-  // Datos del formulario
   export let formData = {
+    _id: null,
     name: '',
     description: '',
     capacity: '',
@@ -21,11 +15,35 @@
     exceptions: []
   };
 
+  let modal;
+  let modalInstance;
+  
+  // Disparadores de eventos
+  const dispatch = createEventDispatcher();
+  
+  // Funciones públicas para mostrar/ocultar
+  export const show = () => {
+    console.log('SHOW');
+    if (modalInstance) {
+      modalInstance.show();
+    }
+  };
+
+  export const hide = () => {
+    if (modalInstance) {
+      console.log('HIDE');
+      modalInstance.hide();
+    }
+  };
+
+  // Estados para el formulario
+  let loading = false;
+  
   // Estados para availabilities
   let newAvailability = {
-    day: 0,
+    day: 1, // Lunes por defecto
     open: 480, // 08:00
-    close: 1080 // 18:00
+    close: 1020 // 17:00
   };
 
   let editingAvailability = null;
@@ -34,22 +52,29 @@
   let newException = {
     date: '',
     open: 480,
-    close: 1080
+    close: 1020
   };
 
   let editingException = null;
 
+  let alertMessage = {
+    text: '',
+    status: ''
+  };
+
   // Opciones para días de la semana
   const daysOfWeek = [
-    { value: 0, label: 'Domingo' },
     { value: 1, label: 'Lunes' },
     { value: 2, label: 'Martes' },
     { value: 3, label: 'Miércoles' },
     { value: 4, label: 'Jueves' },
     { value: 5, label: 'Viernes' },
-    { value: 6, label: 'Sábado' }
+    { value: 6, label: 'Sábado' },
+    { value: 0, label: 'Domingo' }
   ];
 
+  // --- FUNCIONES UTILITARIAS ---
+  
   // Convertir minutos a formato HH:MM
   const minutesToTime = (minutes) => {
     const hours = Math.floor(minutes / 60);
@@ -59,6 +84,7 @@
 
   // Convertir tiempo HH:MM a minutos
   const timeToMinutes = (timeString) => {
+    if (!timeString) return 0;
     const [hours, minutes] = timeString.split(':').map(Number);
     return hours * 60 + minutes;
   };
@@ -69,13 +95,56 @@
     object[field] = minutes;
   };
 
+  const generateId = () => {
+    return Date.now().toString(36) + Math.random().toString(36).substr(2);
+  };
+
+  const formatDateForInput = (dateString) => {
+    if (!dateString) return '';
+    try {
+      const date = new Date(dateString);
+      return date.toISOString().split('T')[0];
+    } catch (e) {
+      return '';
+    }
+  };
+
+  const formatDateForDisplay = (dateString) => {
+    try {
+      const date = new Date(dateString);
+      return date.toLocaleDateString('es-ES');
+    } catch (e) {
+      return 'Fecha inválida';
+    }
+  };
+
+  const closeAlert = () => {
+    setTimeout(() => {
+      alertMessage = { text: '', status: '' };
+    }, 5000); 
+  };
+
+  const showAlert = (text, status = 'danger') => {
+    alertMessage = { text, status };
+    closeAlert();
+  };
+
   // --- FUNCIONES PARA AVAILABILITIES ---
   
   const addAvailability = () => {
+    // Validar que no exista ya para el mismo día
+    const existing = formData.availabilities.find(
+      avail => avail.day === newAvailability.day && 
+      (!editingAvailability || avail._id !== editingAvailability._id)
+    );
+    
+    if (existing) {
+      showAlert('Ya existe una disponibilidad para este día');
+      return;
+    }
+    
     if (newAvailability.open >= newAvailability.close) {
-      alertMessage.text = 'La hora de apertura debe ser anterior a la de cierre';
-      alertMessage.status = 'danger';
-      closeAlert();
+      showAlert('La hora de apertura debe ser anterior a la de cierre');
       return;
     }
     
@@ -95,9 +164,7 @@
 
   const updateAvailability = () => {
     if (newAvailability.open >= newAvailability.close) {
-      alertMessage.text = 'La hora de apertura debe ser anterior a la de cierre';
-      alertMessage.status = 'danger';
-      closeAlert();
+      showAlert('La hora de apertura debe ser anterior a la de cierre');
       return;
     }
     
@@ -117,9 +184,9 @@
 
   const resetAvailabilityForm = () => {
     newAvailability = {
-      day: 0,
+      day: 1,
       open: 480,
-      close: 1080
+      close: 1020
     };
     editingAvailability = null;
   };
@@ -128,16 +195,33 @@
   
   const addException = () => {
     if (!newException.date) {
-      alertMessage.text = 'La fecha es requerida';
-      alertMessage.status = 'danger';
-      closeAlert();
+      showAlert('La fecha es requerida');
+      return;
+    }
+    
+    // Validar que la fecha no sea en el pasado
+    const selectedDate = new Date(newException.date);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    if (selectedDate < today) {
+      showAlert('No se pueden agregar excepciones para fechas pasadas');
+      return;
+    }
+    
+    // Validar que no exista ya para la misma fecha
+    const existing = formData.exceptions.find(
+      exc => exc.date === newException.date &&
+      (!editingException || exc._id !== editingException._id)
+    );
+    
+    if (existing) {
+      showAlert('Ya existe una excepción para esta fecha');
       return;
     }
     
     if (newException.open >= newException.close) {
-      alertMessage.text = 'La hora de apertura debe ser anterior a la de cierre';
-      alertMessage.status = 'danger';
-      closeAlert();
+      showAlert('La hora de apertura debe ser anterior a la de cierre');
       return;
     }
     
@@ -160,16 +244,12 @@
 
   const updateException = () => {
     if (!newException.date) {
-      alertMessage.text = 'La fecha es requerida';
-      alertMessage.status = 'danger';
-      closeAlert();
+      showAlert('La fecha es requerida');
       return;
     }
     
     if (newException.open >= newException.close) {
-      alertMessage.text = 'La hora de apertura debe ser anterior a la de cierre';
-      alertMessage.status = 'danger';
-      closeAlert();
+      showAlert('La hora de apertura debe ser anterior a la de cierre');
       return;
     }
     
@@ -191,116 +271,108 @@
     newException = {
       date: '',
       open: 480,
-      close: 1080
+      close: 1020
     };
     editingException = null;
   };
 
-  // --- FUNCIONES UTILITARIAS ---
+  // --- SUBMIT DEL FORMULARIO ---
   
-  const generateId = () => {
-    const timestamp = Math.floor(Date.now() / 1000).toString(16);
-    const random = Array.from({ length: 16 }, () => 
-      Math.floor(Math.random() * 16).toString(16)
-    ).join('');
-    return timestamp + random;
-  };
-
-  const formatDateForInput = (dateString) => {
-    if (!dateString) return '';
-    const date = new Date(dateString);
-    return date.toISOString().split('T')[0];
-  };
-
-  const formatDateForDisplay = (dateString) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('es-ES');
-  };
-
-  const closeModal = () => {
-    dispatch('close');
-  };
-
-  const closeAlert = () => {
-    setTimeout(() => {
-      alertMessage = { text: '', status: '' };
-    }, 5000); 
-  };
-
   const submitForm = async () => {
+    if (loading) return;
+    
     // Validaciones básicas
     if (!formData.name.trim()) {
-      alertMessage.text = 'El nombre de la sala es requerido';
-      alertMessage.status = 'danger';
-      closeAlert();
+      showAlert('El nombre de la sala es requerido');
       return;
     }
     
     if (!formData.capacity || formData.capacity < 1) {
-      alertMessage.text = 'La capacidad debe ser mayor a 0';
-      alertMessage.status = 'danger';
-      closeAlert();
+      showAlert('La capacidad debe ser mayor a 0');
       return;
     }
     
-    // Aquí iría la llamada a la API para guardar los datos
-    console.log('Datos a guardar:', formData);
+    if (formData.availabilities.length === 0) {
+      showAlert('Debe configurar al menos una disponibilidad semanal');
+      return;
+    }
 
-    // Preparar los datos para enviar
-    const roomData = {
-      name: formData.name.trim(),
-      description: formData.description.trim(),
-      capacity: parseInt(formData.capacity),
-      availabilities: formData.availabilities,
-      exceptions: formData.exceptions,
-      reservations: [] // Inicialmente vacío
-    };
-
+    loading = true;
+    
     try {
+      // Preparar los datos para enviar
+      const roomData = {
+        name: formData.name.trim(),
+        description: formData.description.trim(),
+        capacity: parseInt(formData.capacity),
+        availabilities: formData.availabilities,
+        exceptions: formData.exceptions
+      };
+
       let response;
 
       if (formData._id) {
-        // Llamar a la función que hace la petición PUT
-        response = await editRoom(roomData, formData._id); // Considera cambiar el nombre de esta función
-      }else{
-        // Llamar a la función que hace la petición POST
-        response = await createRoom(roomData); // Considera cambiar el nombre de esta función
+        response = await editRoom(roomData, formData._id);
+        showAlert('Sala actualizada correctamente', 'success');
+      } else {
+        response = await createRoom(roomData);
+        showAlert('Sala creada correctamente', 'success');
       }
       
-      // Si todo sale bien, emitir el evento de éxito
-      dispatch('success', { data: response.data });
+      // Esperar un momento para mostrar el mensaje de éxito
+      setTimeout(() => {
+        dispatch('success', { data: response.data });
+        hide();
+      }, 1000);
       
     } catch (error) {
-      // Manejar el error (ya se imprime en la consola en la función createRoom)
-      alertMessage.text = 'Error al crear la sala. Por favor, intente nuevamente.';
-      alertMessage.status = 'danger';
+      console.error('Error al guardar sala:', error);
+      showAlert(error.message || 'Error al guardar la sala. Por favor, intente nuevamente.');
+    } finally {
+      loading = false;
     }
   };
 
-  // Cerrar modal con tecla Escape
-  onMount(() => {
-    console.log(formData);
-    const handleEscape = (event) => {
-      if (event.key === 'Escape') closeModal();
-    };
-    
-    window.addEventListener('keydown', handleEscape);
-    return () => window.removeEventListener('keydown', handleEscape);
-  });
-
-  let alertMessage = {
-    text: '',
-    status: ''
+  // --- MANEJO DE EVENTOS DEL MODAL ---
+  
+  const handleHidden = () => {
+    dispatch('close');
   };
+
+  const handleSubmit = () => {
+    submitForm();
+  };
+
+  onMount(() => {
+    // Inicializar el modal de Bootstrap
+  
+    modalInstance = new Modal(modal, {
+      backdrop: 'static',
+      keyboard: false
+    });
+  
+    // Escuchar eventos del modal
+    modal.addEventListener('hidden.bs.modal', handleHidden);
+  
+    
+    return () => {
+      if (modal) {
+        modal.removeEventListener('hidden.bs.modal', handleHidden);
+      }
+    };
+  });
 </script>
 
-<div class="modal fade show d-block" tabindex="-1" role="dialog" style="background-color: rgba(0, 0, 0, 0.5)" bind:this={modal}>
-  <div class="modal-dialog modal-{size}" role="document">
+<!-- Modal Bootstrap estándar -->
+<div class="modal fade" tabindex="-1" role="dialog" bind:this={modal}>
+  <div class="modal-dialog modal-{size} modal-dialog-scrollable" role="document">
     <div class="modal-content">
       <div class="modal-header">
         <h5 class="modal-title">
-          <i class="fa {formData._id == null ? 'fa-plus-circle' : 'fa-pencil-square'}" style="margin-right: 10px;"></i>{formData._id == null ? 'Nueva Sala' : 'Editar Sala'} </h5>
-        <button type="button" class="btn-close" on:click={closeModal} aria-label="Close"></button>
+          <i class="fa {formData._id ? 'fa-pencil-square' : 'fa-plus-circle'}" style="margin-right: 10px;"></i>
+          {formData._id ? 'Editar Sala' : 'Nueva Sala'}
+        </h5>
+        <button type="button" class="btn-close" on:click={hide} aria-label="Close"></button>
       </div>
       
       <div class="modal-body">
@@ -319,6 +391,7 @@
               bind:value={formData.name}
               placeholder="Ingrese el nombre de la sala"
               required
+              disabled={loading}
             >
           </div>
           <div class="col-md-6">
@@ -331,6 +404,7 @@
               placeholder="Número de personas"
               min="1"
               required
+              disabled={loading}
             >
           </div>
         </div>
@@ -342,22 +416,26 @@
             id="roomDescription" 
             rows="3" 
             bind:value={formData.description}
-            placeholder="Descripción de la sala"
+            placeholder="Descripción de la sala (opcional)"
+            disabled={loading}
           ></textarea>
         </div>
 
         <!-- Disponibilidades (Availabilities) -->
         <div class="card mb-4">
-          <div class="card-header">
-            <h6 class="mb-0"><i class="fa fa-calendar-plus-o" aria-hidden="true"></i>
- Disponibilidad Semanal</h6>
+          <div class="card-header bg-light">
+            <h6 class="mb-0">
+              <i class="fa fa-calendar-check-o" aria-hidden="true"></i>
+              Disponibilidad Semanal *
+            </h6>
+            <small class="text-muted">Define los horarios de disponibilidad para cada día de la semana</small>
           </div>
           <div class="card-body">
             <!-- Formulario para agregar/editar disponibilidad -->
             <div class="row g-3 mb-3">
               <div class="col-md-3">
                 <label class="form-label">Día</label>
-                <select class="form-select" bind:value={newAvailability.day}>
+                <select class="form-select" bind:value={newAvailability.day} disabled={loading}>
                   {#each daysOfWeek as day}
                     <option value={day.value}>{day.label}</option>
                   {/each}
@@ -370,6 +448,7 @@
                   class="form-control"
                   value={minutesToTime(newAvailability.open)}
                   on:change={(e) => handleTimeChange(e, 'open', newAvailability)}
+                  disabled={loading}
                 >
               </div>
               <div class="col-md-3">
@@ -379,19 +458,20 @@
                   class="form-control"
                   value={minutesToTime(newAvailability.close)}
                   on:change={(e) => handleTimeChange(e, 'close', newAvailability)}
+                  disabled={loading}
                 >
               </div>
               <div class="col-md-3 d-flex align-items-end">
                 {#if editingAvailability}
-                  <button type="button" class="btn btn-warning btn-sm me-2" on:click={updateAvailability}>
-                    Actualizar
+                  <button type="button" class="btn btn-warning btn-sm me-2" on:click={updateAvailability} disabled={loading}>
+                    <i class="fa fa-check"></i> Actualizar
                   </button>
-                  <button type="button" class="btn btn-secondary btn-sm" on:click={cancelEditAvailability}>
-                    Cancelar
+                  <button type="button" class="btn btn-secondary btn-sm" on:click={cancelEditAvailability} disabled={loading}>
+                    <i class="fa fa-times"></i> Cancelar
                   </button>
                 {:else}
-                  <button type="button" class="btn btn-primary btn-sm" on:click={addAvailability}>
-                    Agregar
+                  <button type="button" class="btn btn-primary btn-sm" on:click={addAvailability} disabled={loading}>
+                    <i class="fa fa-plus"></i> Agregar
                   </button>
                 {/if}
               </div>
@@ -420,15 +500,17 @@
                             type="button" 
                             class="btn btn-outline-primary btn-sm me-1"
                             on:click={() => editAvailability(availability)}
+                            disabled={loading}
                           >
-                            Editar
+                            <i class="fa fa-edit"></i>
                           </button>
                           <button 
                             type="button" 
                             class="btn btn-outline-danger btn-sm"
                             on:click={() => deleteAvailability(availability._id)}
+                            disabled={loading}
                           >
-                            Eliminar
+                            <i class="fa fa-trash"></i>
                           </button>
                         </td>
                       </tr>
@@ -437,16 +519,22 @@
                 </table>
               </div>
             {:else}
-              <p class="text-muted">No hay disponibilidades configuradas</p>
+              <div class="alert alert-warning mb-0">
+                <i class="fa fa-exclamation-triangle"></i>
+                No hay disponibilidades configuradas. Debe agregar al menos una.
+              </div>
             {/if}
           </div>
         </div>
 
         <!-- Excepciones -->
         <div class="card">
-          <div class="card-header">
-            <h6 class="mb-0"><i class="fa fa-exclamation-triangle" aria-hidden="true"></i>
- Excepciones</h6>
+          <div class="card-header bg-light">
+            <h6 class="mb-0">
+              <i class="fa fa-calendar-times-o" aria-hidden="true"></i>
+              Excepciones
+            </h6>
+            <small class="text-muted">Define horarios especiales para fechas específicas</small>
           </div>
           <div class="card-body">
             <!-- Formulario para agregar/editar excepción -->
@@ -457,6 +545,8 @@
                   type="date" 
                   class="form-control"
                   bind:value={newException.date}
+                  min={new Date().toISOString().split('T')[0]}
+                  disabled={loading}
                 >
               </div>
               <div class="col-md-3">
@@ -466,6 +556,7 @@
                   class="form-control"
                   value={minutesToTime(newException.open)}
                   on:change={(e) => handleTimeChange(e, 'open', newException)}
+                  disabled={loading}
                 >
               </div>
               <div class="col-md-3">
@@ -475,19 +566,20 @@
                   class="form-control"
                   value={minutesToTime(newException.close)}
                   on:change={(e) => handleTimeChange(e, 'close', newException)}
+                  disabled={loading}
                 >
               </div>
               <div class="col-md-3 d-flex align-items-end">
                 {#if editingException}
-                  <button type="button" class="btn btn-warning btn-sm me-2" on:click={updateException}>
-                    Actualizar
+                  <button type="button" class="btn btn-warning btn-sm me-2" on:click={updateException} disabled={loading}>
+                    <i class="fa fa-check"></i> Actualizar
                   </button>
-                  <button type="button" class="btn btn-secondary btn-sm" on:click={cancelEditException}>
-                    Cancelar
+                  <button type="button" class="btn btn-secondary btn-sm" on:click={cancelEditException} disabled={loading}>
+                    <i class="fa fa-times"></i> Cancelar
                   </button>
                 {:else}
-                  <button type="button" class="btn btn-primary btn-sm" on:click={addException}>
-                    Agregar
+                  <button type="button" class="btn btn-primary btn-sm" on:click={addException} disabled={loading}>
+                    <i class="fa fa-plus"></i> Agregar
                   </button>
                 {/if}
               </div>
@@ -516,15 +608,17 @@
                             type="button" 
                             class="btn btn-outline-primary btn-sm me-1"
                             on:click={() => editException(exception)}
+                            disabled={loading}
                           >
-                            Editar
+                            <i class="fa fa-edit"></i>
                           </button>
                           <button 
                             type="button" 
                             class="btn btn-outline-danger btn-sm"
                             on:click={() => deleteException(exception._id)}
+                            disabled={loading}
                           >
-                            Eliminar
+                            <i class="fa fa-trash"></i>
                           </button>
                         </td>
                       </tr>
@@ -533,18 +627,23 @@
                 </table>
               </div>
             {:else}
-              <p class="text-muted">No hay excepciones configuradas</p>
+              <p class="text-muted mb-0">No hay excepciones configuradas</p>
             {/if}
           </div>
         </div>
       </div>
       
       <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" on:click={closeModal}>
+        <button type="button" class="btn btn-secondary" on:click={hide} disabled={loading}>
           <i class="fa fa-times" aria-hidden="true"></i> Cancelar
         </button>
-        <button type="button" class="btn btn-primary" on:click={submitForm}> 
-          <i class="fa fa-check" aria-hidden="true"></i>Guardar Sala
+        <button type="button" class="btn btn-primary" on:click={handleSubmit} disabled={loading}> 
+          {#if loading}
+            <i class="fa fa-spinner fa-spin" aria-hidden="true"></i> Guardando...
+          {:else}
+            <i class="fa fa-check" aria-hidden="true"></i> 
+            {formData._id ? 'Actualizar Sala' : 'Guardar Sala'}
+          {/if}
         </button>
       </div>
     </div>
@@ -552,14 +651,19 @@
 </div>
 
 <style>
-  .modal {
-    backdrop-filter: blur(2px);
-    z-index: 1055;
-  }
-  
   .modal-dialog {
     margin: 1.75rem auto;
     max-width: 90%;
+    max-height: 85vh;
+  }
+  
+  .modal-content {
+    max-height: 85vh;
+  }
+  
+  .modal-body {
+    overflow-y: auto;
+    max-height: calc(85vh - 120px);
   }
   
   .card-header {
@@ -569,5 +673,21 @@
   
   .table th {
     background-color: #f8f9fa;
+    font-size: 0.875rem;
+  }
+  
+  .btn-sm {
+    font-size: 0.75rem;
+    padding: 0.25rem 0.5rem;
+  }
+  
+  /* Mejoras visuales */
+  .form-label {
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+  }
+  
+  .card-header h6 {
+    color: #495057;
   }
 </style>

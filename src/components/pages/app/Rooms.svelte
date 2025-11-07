@@ -1,4 +1,5 @@
 <script>
+  // Rooms.svelte
   // Ajusta la ruta de importación según la ubicación real de tu componente
   import DataTable from '../../widgets/DataTable.svelte'; 
   // Asume que tienes un componente o función para mostrar alertas
@@ -32,7 +33,7 @@
     reservations: [] // Inicialmente vacío
   }
 
-  let showModal = false;
+  let modalRef;
 
   // --- CONFIGURACIÓN DE LA TABLA ---
   
@@ -78,7 +79,7 @@
           console.log(`Editando: ${record.name} (${record._id})`);
           // navigate(`/rooms/${record._id}/edit`);
           selectedRoom = record;
-          showModal = true;
+          modalRef.show();
         }
       },
       {
@@ -98,18 +99,18 @@
     disabled: false,
     action: () => {
       selectedRoom = emptyRoom;
-      showModal = true; // Activa el modal
+      modalRef.show(); // Activa el modal
     },
   };
 
   // Función para cerrar el modal
   const handleCloseModal = () => {
-    showModal = false;
+    modalRef.hide();
   };
 
   // Función para manejar el envío exitoso del formulario
   const handleFormSuccess = (event) => {
-    showModal = false;
+    modalRef.hide();
     // mostrar alerta
     console.log(event)
     alertMessage.text = 'Se ha creado la sala exitosamente.';
@@ -186,13 +187,12 @@
         />
     </div>
 
-    {#if showModal}
-      <RoomFormModal
-        on:close={handleCloseModal}
-        on:success={handleFormSuccess}
-        formData={selectedRoom}
-        size="lg"
-      />
-    {/if}
+    <RoomFormModal
+      bind:this={modalRef}
+      on:close={handleCloseModal}
+      on:success={handleFormSuccess}
+      formData={selectedRoom}
+      size="lg"
+    />
   </div>
 </div>

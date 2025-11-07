@@ -76,6 +76,43 @@ const getRooms = async ({
   }
 };
 
+const getRoomById = async (roomId, monthFilter) => {
+  try {
+    const room = await Room.findById(roomId);
+
+    if (!room) {
+      return null; // Si la sala no existe, devolver null
+    }
+
+    // Si se pasa un mes, filtrar las excepciones y reservaciones por ese mes
+    if (monthFilter) {
+      const startDate = new Date(new Date().getFullYear(), monthFilter - 1, 1); // Primer día del mes
+      const endDate = new Date(new Date().getFullYear(), monthFilter, 0); // Último día del mes
+
+      room.exceptions = room.exceptions.filter(exception => {
+        return exception.date >= startDate && exception.date <= endDate;
+      });
+
+      room.reservations = room.reservationIds.filter(reservation => {
+        const reservationDate = new Date(reservation.date);
+        return reservationDate >= startDate && reservationDate <= endDate;
+      });
+    }
+
+    // Devolver el room con todos sus datos, incluidas las excepciones y reservaciones del mes si aplica
+    return {
+      ...room.toObject(),
+      availabilities: room.availabilities, // Siempre devolvemos todas las disponibilidades
+      exceptions: room.exceptions,         // Excepciones filtradas si hay mes
+      reservations: room.reservations,     // Reservaciones filtradas si hay mes
+    };
+
+  } catch (error) {
+    console.error('Error al obtener la habitación por ID:', error);
+    throw error;
+  }
+}
+
 const createRoom = async (roomData) => {
 
   try {
@@ -119,5 +156,6 @@ export default {
   createRoom,
   updateRoom,
   deleteRoom,
+  getRoomById,
 };
  

@@ -39,6 +39,37 @@ router.get('/api/v1/rooms', async (ctx) => {
   }
 });
 
+router.get('/api/v1/rooms/:id', async (ctx) => {
+  try {
+    const { id } = ctx.params;  // Obtén el room ID
+    const { month } = ctx.query;  // Obtén el parámetro de mes (opcional)
+
+    // Verificar si el mes está presente y es válido
+    const monthFilter = month ? parseInt(month) : null;
+
+    // Buscar la habitación por ID
+    const room = await roomsService.getRoomById(id, monthFilter);
+
+    if (!room) {
+      ctx.status = 404;
+      ctx.body = { success: false, message: 'Room not found' };
+      return;
+    }
+
+    ctx.status = 200;
+    ctx.body = { success: true, room };
+
+  } catch (error) {
+    console.error(error);
+    ctx.status = 500;
+    ctx.body = {
+      success: false,
+      message: 'Internal server error',
+      timestamp: new Date().toISOString()
+    };
+  }
+});
+
 router.post('/api/v1/rooms', async (ctx) => {
   try {
     const roomData = ctx.request.body;

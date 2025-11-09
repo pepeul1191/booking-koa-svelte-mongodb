@@ -1,5 +1,8 @@
 <!-- MonthlyCalendar.svelte -->
 <script>
+  import { onMount } from 'svelte';
+  import { Modal } from 'bootstrap';
+
   export let roomData = {
     capacity: 0,
     availabilities: [],
@@ -12,8 +15,22 @@
   let currentDate = new Date();
   let selectedDate = null;
   let selectedReservation = null;
+  let detailsModal = null;
+  let selectedOption = null;
+  let isCalendarDisabled = true;
+
+  // Inicializar modal cuando el componente se monta
+  onMount(() => {
+    const modalElement = document.getElementById('detailsModal');
+    if (modalElement) {
+      detailsModal = new Modal(modalElement);
+    }
+  });
 
   $: selectedDateAvailability = selectedDate ? getAvailabilityForDate(selectedDate) : null;
+  
+  // Actualizar estado de deshabilitación cuando cambia la selección
+  $: isCalendarDisabled = !selectedOption;
 
   // Días de la semana
   const weekDays = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
@@ -138,31 +155,47 @@
 
   // Navegación del calendario
   const previousMonth = () => {
+    if (isCalendarDisabled) return;
     currentDate = new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1);
-    getDaysInMonth();
+    days = getDaysInMonth();
   };
 
   const nextMonth = () => {
+    if (isCalendarDisabled) return;
     currentDate = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1);
-    getDaysInMonth();
+    days = getDaysInMonth();
   };
 
   const goToToday = () => {
+    if (isCalendarDisabled) return;
     currentDate = new Date();
+    days = getDaysInMonth();
   };
 
   // Seleccionar fecha
   const selectDate = (day) => {
-    if (day.isCurrentMonth) {
-      selectedDate = day.date;
-      selectedReservation = null;
+    if (isCalendarDisabled || !day.isCurrentMonth) return;
+    
+    selectedDate = day.date;
+    selectedReservation = null;
+    
+    // Mostrar modal con detalles
+    if (detailsModal) {
+      detailsModal.show();
     }
   };
 
   // Seleccionar reservación
   const selectReservation = (reservation, event) => {
+    if (isCalendarDisabled) return;
+    
     event.stopPropagation();
     selectedReservation = reservation;
+    
+    // Mostrar modal con detalles de la reservación
+    if (detailsModal) {
+      detailsModal.show();
+    }
   };
 
   // Obtener clase CSS para el estado de disponibilidad
@@ -196,6 +229,11 @@
     }
   };
 
+  // Manejar cambio en el select
+  const handleOptionChange = (event) => {
+    selectedOption = event.target.value;
+  };
+
   $: days = getDaysInMonth();
   $: currentMonthText = `${monthNames[currentDate.getMonth()]} ${currentDate.getFullYear()}`;
   $: today = new Date().toDateString();
@@ -205,25 +243,55 @@
   <!-- Controles del calendario -->
   <div class="calendar-header">
     <div class="calendar-controls">
-      <button class="btn btn-outline-secondary btn-sm" on:click={previousMonth}>
+      <button class="btn btn-outline-secondary btn-sm btn-calendar-month" on:click={previousMonth} disabled={isCalendarDisabled}>
         <i class="fa fa-chevron-left"></i>
       </button>
-      <h3 class="calendar-title">{currentMonthText}</h3>
-      <button class="btn btn-outline-secondary btn-sm" on:click={nextMonth}>
+      <h3 class="calendar-title {isCalendarDisabled ? 'text-muted' : ''}">{currentMonthText}</h3>
+      <button class="btn btn-outline-secondary btn-sm btn-calendar-month" on:click={nextMonth} disabled={isCalendarDisabled}>
         <i class="fa fa-chevron-right"></i>
       </button>
     </div>
-    <button class="btn btn-primary btn-sm" on:click={goToToday}>
+
+    <!-- Selector de ambiente -->
+    <div class="d-flex align-items-center ms-auto">
+      <span class="me-2">Selecciona un Ambiente:</span>
+      <select 
+        id="option-select" 
+        class="form-select" 
+        style="width: 350px; margin-right: 8px;"
+        bind:value={selectedOption}
+        on:change={handleOptionChange}
+      >
+        <option value="" disabled selected>-- Selecciona un ambiente --</option>
+        <option value="option1">Opción 1</option>
+        <option value="option2">Opción 2</option>
+        <option value="option3">Opción 3</option>
+      </select>
+    </div>
+
+    <button class="btn btn-primary" on:click={goToToday} disabled={isCalendarDisabled}>
+      <i class="fa fa-calendar-check-o"></i>
       Hoy
     </button>
   </div>
 
   <!-- Calendario -->
-  <div class="calendar">
+  <div class="calendar {isCalendarDisabled ? 'calendar-disabled' : ''}">
+    <!-- Mensaje cuando está deshabilitado -->
+    {#if isCalendarDisabled}
+      <div class="calendar-disabled-overlay">
+        <div class="disabled-message">
+          <i class="fa fa-calendar-times fa-3x mb-3"></i>
+          <h5>Selecciona un ambiente para ver el calendario</h5>
+          <p class="text-muted">Por favor, elige un ambiente de la lista desplegable para habilitar el calendario.</p>
+        </div>
+      </div>
+    {/if}
+
     <!-- Días de la semana -->
     <div class="calendar-weekdays">
       {#each weekDays as day}
-        <div class="calendar-weekday">{day}</div>
+        <div class="calendar-weekday {isCalendarDisabled ? 'text-muted' : ''}">{day}</div>
       {/each}
     </div>
 
@@ -231,9 +299,9 @@
     <div class="calendar-days">
       {#each days as day, index}
         <div 
-          class="calendar-day {day.isCurrentMonth ? 'current-month' : 'other-month'} {getAvailabilityClass(day.availability)} {day.date.toDateString() === today ? 'today' : ''} {selectedDate && day.date.toDateString() === selectedDate.toDateString() ? 'selected' : ''}"
+          class="calendar-day {day.isCurrentMonth ? 'current-month' : 'other-month'} {getAvailabilityClass(day.availability)} {day.date.toDateString() === today ? 'today' : ''} {selectedDate && day.date.toDateString() === selectedDate.toDateString() ? 'selected' : ''} {isCalendarDisabled ? 'day-disabled' : ''}"
           on:click={() => selectDate(day)}
-          title={getAvailabilityTooltip(day.availability)}
+          title={isCalendarDisabled ? 'Selecciona un ambiente primero' : getAvailabilityTooltip(day.availability)}
         >
           <div class="day-number">{day.date.getDate()}</div>
           
@@ -257,9 +325,9 @@
             {#each day.reservations as reservation, i}
               {#if i < 2} <!-- Mostrar máximo 2 reservaciones por día -->
                 <div 
-                  class="reservation-badge {reservation.status} {selectedReservation && selectedReservation._id === reservation._id ? 'selected' : ''}"
+                  class="reservation-badge {reservation.status} {selectedReservation && selectedReservation._id === reservation._id ? 'selected' : ''} {isCalendarDisabled ? 'reservation-disabled' : ''}"
                   on:click|stopPropagation={(e) => selectReservation(reservation, e)}
-                  title="{reservation.subject} - {minutesToTime(reservation.startTime)} a {minutesToTime(reservation.endTime)}"
+                  title="{isCalendarDisabled ? 'Selecciona un ambiente primero' : reservation.subject + ' - ' + minutesToTime(reservation.startTime) + ' a ' + minutesToTime(reservation.endTime)}"
                 >
                   {reservation.subject.substring(0, 10)}{reservation.subject.length > 10 ? '...' : ''}
                 </div>
@@ -273,86 +341,108 @@
       {/each}
     </div>
   </div>
+</div>
 
-  <!-- Panel de detalles -->
-  <div class="details-panel">
-    {#if selectedReservation}
-      <div class="reservation-details">
-        <h4>Detalles de Reservación</h4>
-        <div class="detail-item">
-          <strong>Asunto:</strong> {selectedReservation.subject}
-        </div>
-        <div class="detail-item">
-          <strong>Fecha:</strong> {new Date(selectedReservation.date).toLocaleDateString('es-ES')}
-        </div>
-        <div class="detail-item">
-          <strong>Horario:</strong> {minutesToTime(selectedReservation.startTime)} - {minutesToTime(selectedReservation.endTime)}
-        </div>
-        <div class="detail-item">
-          <strong>Estado:</strong> 
-          <span class="status-badge {selectedReservation.status}">
-            {selectedReservation.status === 'pending' ? 'Pendiente' : 
-             selectedReservation.status === 'confirmed' ? 'Confirmada' : 
-             selectedReservation.status === 'cancelled' ? 'Cancelada' : 
-             'Completada'}
-          </span>
-        </div>
-        <div class="detail-item">
-          <strong>Creada por:</strong> {selectedReservation.createdBy}
-        </div>
-        <div class="detail-item">
-          <strong>Participantes:</strong> {selectedReservation.participants.length}
-        </div>
+<!-- Modal de Bootstrap para detalles -->
+<div class="modal fade" id="detailsModal" tabindex="-1" aria-labelledby="detailsModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="detailsModalLabel">
+          {#if selectedReservation}
+            Detalles de Reservación
+          {:else if selectedDate}
+            Detalles del {selectedDate ? selectedDate.toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }) : ''}
+          {:else}
+            Detalles
+          {/if}
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
-    {:else if selectedDate}
-      <div class="date-details">
-        <h4>Detalles del {selectedDate.toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</h4>
-        
-        {#if selectedDateAvailability}
-          <div class="availability-info {getAvailabilityClass(selectedDateAvailability)}">
-            {#if selectedDateAvailability.type === 'available'}
-              <p><i class="fa fa-check"></i> Disponible: {minutesToTime(selectedDateAvailability.open)} - {minutesToTime(selectedDateAvailability.close)}</p>
-            {:else if selectedDateAvailability.type === 'exception'}
-              {#if selectedDateAvailability.open === 0 && selectedDateAvailability.close === 0}
-                <p><i class="fa fa-ban"></i> Cerrado: {selectedDateAvailability.reason}</p>
-              {:else}
-                <p><i class="fa fa-info-circle"></i> Horario especial: {minutesToTime(selectedDateAvailability.open)} - {minutesToTime(selectedDateAvailability.close)}</p>
-                <p><small>{selectedDateAvailability.reason}</small></p>
-              {/if}
-            {:else}
-              <p><i class="fa fa-times"></i> No disponible</p>
+      <div class="modal-body">
+        {#if selectedReservation}
+          <div class="reservation-details">
+            <div class="detail-item">
+              <strong>Asunto:</strong> {selectedReservation.subject}
+            </div>
+            <div class="detail-item">
+              <strong>Fecha:</strong> {new Date(selectedReservation.date).toLocaleDateString('es-ES')}
+            </div>
+            <div class="detail-item">
+              <strong>Horario:</strong> {minutesToTime(selectedReservation.startTime)} - {minutesToTime(selectedReservation.endTime)}
+            </div>
+            <div class="detail-item">
+              <strong>Estado:</strong> 
+              <span class="status-badge {selectedReservation.status}">
+                {selectedReservation.status === 'pending' ? 'Pendiente' : 
+                 selectedReservation.status === 'confirmed' ? 'Confirmada' : 
+                 selectedReservation.status === 'cancelled' ? 'Cancelada' : 
+                 'Completada'}
+              </span>
+            </div>
+            <div class="detail-item">
+              <strong>Creada por:</strong> {selectedReservation.createdBy}
+            </div>
+            <div class="detail-item">
+              <strong>Participantes:</strong> {selectedReservation.participants.length}
+            </div>
+          </div>
+        {:else if selectedDate}
+          <div class="date-details">
+            {#if selectedDateAvailability}
+              <div class="availability-info {getAvailabilityClass(selectedDateAvailability)} mb-4">
+                {#if selectedDateAvailability.type === 'available'}
+                  <p><i class="fa fa-check"></i> Disponible: {minutesToTime(selectedDateAvailability.open)} - {minutesToTime(selectedDateAvailability.close)}</p>
+                {:else if selectedDateAvailability.type === 'exception'}
+                  {#if selectedDateAvailability.open === 0 && selectedDateAvailability.close === 0}
+                    <p><i class="fa fa-ban"></i> Cerrado: {selectedDateAvailability.reason}</p>
+                  {:else}
+                    <p><i class="fa fa-info-circle"></i> Horario especial: {minutesToTime(selectedDateAvailability.open)} - {minutesToTime(selectedDateAvailability.close)}</p>
+                    <p><small>{selectedDateAvailability.reason}</small></p>
+                  {/if}
+                {:else}
+                  <p><i class="fa fa-times"></i> No disponible</p>
+                {/if}
+              </div>
             {/if}
+
+            <div class="reservations-list">
+              <h6>Reservaciones ({getReservationsForDate(selectedDate).length})</h6>
+              {#if getReservationsForDate(selectedDate).length > 0}
+                <div class="reservations-container">
+                  {#each getReservationsForDate(selectedDate) as reservation}
+                    <div 
+                      class="reservation-item {reservation.status} {selectedReservation && selectedReservation._id === reservation._id ? 'selected' : ''}"
+                      on:click={() => {
+                        selectedReservation = reservation;
+                      }}
+                    >
+                      <div class="reservation-time">{minutesToTime(reservation.startTime)} - {minutesToTime(reservation.endTime)}</div>
+                      <div class="reservation-subject">{reservation.subject}</div>
+                      <div class="reservation-status {reservation.status}">
+                        {reservation.status === 'pending' ? 'Pendiente' : 
+                         reservation.status === 'confirmed' ? 'Confirmada' : 
+                         reservation.status === 'cancelled' ? 'Cancelada' : 
+                         'Completada'}
+                      </div>
+                    </div>
+                  {/each}
+                </div>
+              {:else}
+                <p class="text-muted">No hay reservaciones para esta fecha</p>
+              {/if}
+            </div>
+          </div>
+        {:else}
+          <div class="no-selection text-center py-4">
+            <p class="text-muted">No hay detalles para mostrar</p>
           </div>
         {/if}
-
-        <div class="reservations-list">
-          <h5>Reservaciones ({getReservationsForDate(selectedDate).length})</h5>
-          {#if getReservationsForDate(selectedDate).length > 0}
-            {#each getReservationsForDate(selectedDate) as reservation}
-              <div 
-                class="reservation-item {reservation.status} {selectedReservation && selectedReservation._id === reservation._id ? 'selected' : ''}"
-                on:click={() => selectedReservation = reservation}
-              >
-                <div class="reservation-time">{minutesToTime(reservation.startTime)} - {minutesToTime(reservation.endTime)}</div>
-                <div class="reservation-subject">{reservation.subject}</div>
-                <div class="reservation-status {reservation.status}">
-                  {reservation.status === 'pending' ? 'Pendiente' : 
-                   reservation.status === 'confirmed' ? 'Confirmada' : 
-                   reservation.status === 'cancelled' ? 'Cancelada' : 
-                   'Completada'}
-                </div>
-              </div>
-            {/each}
-          {:else}
-            <p class="text-muted">No hay reservaciones para esta fecha</p>
-          {/if}
-        </div>
       </div>
-    {:else}
-      <div class="no-selection">
-        <p>Selecciona una fecha para ver los detalles</p>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
       </div>
-    {/if}
+    </div>
   </div>
 </div>
 
@@ -365,6 +455,7 @@
     border-radius: 8px;
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
     overflow: hidden;
+    position: relative;
   }
 
   .calendar-header {
@@ -394,6 +485,30 @@
     flex: 1;
     display: flex;
     flex-direction: column;
+    position: relative;
+  }
+
+  .calendar-disabled {
+    position: relative;
+  }
+
+  .calendar-disabled-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.9);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+  }
+
+  .disabled-message {
+    text-align: center;
+    color: #6c757d;
+    max-width: 300px;
   }
 
   .calendar-weekdays {
@@ -467,6 +582,15 @@
   .calendar-day.unavailable {
     border-left: 4px solid #6c757d;
     background-color: #f8f9fa;
+  }
+
+  .day-disabled {
+    cursor: not-allowed !important;
+    opacity: 0.6;
+  }
+
+  .day-disabled:hover {
+    background-color: inherit !important;
   }
 
   .day-number {
@@ -548,6 +672,11 @@
     background: #6c757d;
   }
 
+  .reservation-disabled {
+    cursor: not-allowed !important;
+    opacity: 0.6;
+  }
+
   .more-reservations {
     font-size: 0.7rem;
     color: #6c757d;
@@ -555,52 +684,33 @@
     margin-top: 0.25rem;
   }
 
-  .details-panel {
-    width: 300px;
-    border-left: 1px solid #dee2e6;
-    padding: 1rem;
-    background: #f8f9fa;
-    overflow-y: auto;
+  .btn-calendar-month {
+    border: 0px;
   }
 
-  .reservation-details,
-  .date-details {
-    animation: fadeIn 0.3s ease;
+  .btn-calendar-month:hover:not(:disabled) {
+    background: transparent;
+    color: var(--bs-primary);
   }
 
-  .detail-item {
-    margin-bottom: 0.75rem;
+  .btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
   }
 
-  .status-badge {
-    padding: 0.25rem 0.5rem;
-    border-radius: 4px;
-    font-size: 0.875rem;
-    font-weight: 600;
+  /* Estilos para el modal */
+  .reservation-details .detail-item {
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid #e9ecef;
   }
 
-  .status-badge.pending {
-    background: #fff3cd;
-    color: #856404;
-  }
-
-  .status-badge.confirmed {
-    background: #d1edff;
-    color: #004085;
-  }
-
-  .status-badge.cancelled {
-    background: #f8d7da;
-    color: #721c24;
-  }
-
-  .status-badge.completed {
-    background: #e2e3e5;
-    color: #383d41;
+  .reservation-details .detail-item:last-child {
+    border-bottom: none;
   }
 
   .availability-info {
-    padding: 0.75rem;
+    padding: 1rem;
     border-radius: 4px;
     margin-bottom: 1rem;
   }
@@ -625,8 +735,9 @@
     border: 1px solid #d6d8db;
   }
 
-  .reservations-list {
-    margin-top: 1rem;
+  .reservations-container {
+    max-height: 300px;
+    overflow-y: auto;
   }
 
   .reservation-item {
@@ -639,7 +750,7 @@
   }
 
   .reservation-item:hover {
-    background: white;
+    background: #f8f9fa;
     border-color: #007bff;
   }
 
@@ -692,12 +803,31 @@
     color: white;
   }
 
-  .no-selection {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    height: 100%;
-    color: #6c757d;
+  .status-badge {
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.875rem;
+    font-weight: 600;
+  }
+
+  .status-badge.pending {
+    background: #fff3cd;
+    color: #856404;
+  }
+
+  .status-badge.confirmed {
+    background: #d1edff;
+    color: #004085;
+  }
+
+  .status-badge.cancelled {
+    background: #f8d7da;
+    color: #721c24;
+  }
+
+  .status-badge.completed {
+    background: #e2e3e5;
+    color: #383d41;
   }
 
   @keyframes fadeIn {
@@ -711,14 +841,26 @@
       flex-direction: column;
     }
 
-    .details-panel {
-      width: 100%;
-      border-left: none;
-      border-top: 1px solid #dee2e6;
-    }
-
     .calendar-day {
       min-height: 80px;
+    }
+
+    .calendar-header {
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .calendar-controls {
+      order: 2;
+    }
+
+    .d-flex.align-items-center.ms-auto {
+      order: 1;
+      width: 100%;
+    }
+
+    #option-select {
+      width: 100% !important;
     }
   }
 </style>

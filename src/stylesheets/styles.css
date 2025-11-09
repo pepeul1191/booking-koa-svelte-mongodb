@@ -215,7 +215,7 @@ footer{
     background-color: #f9f9f9;
 }
 
-.form-control, .btn, .modal-content{
+.form-control, .btn, .modal-content, .form-select{
     border-radius: 0px;
 }
 

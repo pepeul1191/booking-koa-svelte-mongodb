@@ -463,14 +463,14 @@
               </div>
               <div class="col-md-3 d-flex align-items-end">
                 {#if editingAvailability}
-                  <button type="button" class="btn btn-warning btn-sm me-2" on:click={updateAvailability} disabled={loading}>
+                  <button type="button" class="btn btn-warning  me-2" on:click={updateAvailability} disabled={loading}>
                     <i class="fa fa-check"></i> Actualizar
                   </button>
-                  <button type="button" class="btn btn-secondary btn-sm" on:click={cancelEditAvailability} disabled={loading}>
+                  <button type="button" class="btn btn-secondary " on:click={cancelEditAvailability} disabled={loading}>
                     <i class="fa fa-times"></i> Cancelar
                   </button>
                 {:else}
-                  <button type="button" class="btn btn-primary btn-sm" on:click={addAvailability} disabled={loading}>
+                  <button type="button" class="btn btn-primary " on:click={addAvailability} disabled={loading}>
                     <i class="fa fa-plus"></i> Agregar
                   </button>
                 {/if}
@@ -498,11 +498,12 @@
                         <td>
                           <button 
                             type="button" 
-                            class="btn btn-outline-primary btn-sm me-1"
+                            class="btn btn-outline-secondary btn-sm  me-1"
                             on:click={() => editAvailability(availability)}
                             disabled={loading}
                           >
-                            <i class="fa fa-edit"></i>
+                            <i class="fa fa-pencil"></i>
+                            Editar
                           </button>
                           <button 
                             type="button" 
@@ -510,7 +511,8 @@
                             on:click={() => deleteAvailability(availability._id)}
                             disabled={loading}
                           >
-                            <i class="fa fa-trash"></i>
+                            <i class="fa fa-times"></i>
+                            Eliminar
                           </button>
                         </td>
                       </tr>
@@ -571,14 +573,14 @@
               </div>
               <div class="col-md-3 d-flex align-items-end">
                 {#if editingException}
-                  <button type="button" class="btn btn-warning btn-sm me-2" on:click={updateException} disabled={loading}>
+                  <button type="button" class="btn btn-warning  me-2" on:click={updateException} disabled={loading}>
                     <i class="fa fa-check"></i> Actualizar
                   </button>
-                  <button type="button" class="btn btn-secondary btn-sm" on:click={cancelEditException} disabled={loading}>
+                  <button type="button" class="btn btn-secondary " on:click={cancelEditException} disabled={loading}>
                     <i class="fa fa-times"></i> Cancelar
                   </button>
                 {:else}
-                  <button type="button" class="btn btn-primary btn-sm" on:click={addException} disabled={loading}>
+                  <button type="button" class="btn btn-primary " on:click={addException} disabled={loading}>
                     <i class="fa fa-plus"></i> Agregar
                   </button>
                 {/if}
@@ -606,11 +608,12 @@
                         <td>
                           <button 
                             type="button" 
-                            class="btn btn-outline-primary btn-sm me-1"
+                            class="btn btn-outline-secondary btn-sm me-1"
                             on:click={() => editException(exception)}
                             disabled={loading}
                           >
-                            <i class="fa fa-edit"></i>
+                            <i class="fa fa-pencil"></i>
+                            Editar
                           </button>
                           <button 
                             type="button" 
@@ -618,7 +621,8 @@
                             on:click={() => deleteException(exception._id)}
                             disabled={loading}
                           >
-                            <i class="fa fa-trash"></i>
+                            <i class="fa fa-times"></i>
+                            Eliminar
                           </button>
                         </td>
                       </tr>
@@ -677,7 +681,6 @@
   }
   
   .btn-sm {
-    font-size: 0.75rem;
     padding: 0.25rem 0.5rem;
   }
   

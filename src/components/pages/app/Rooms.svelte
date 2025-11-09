@@ -150,7 +150,7 @@
   let selectedRoom = emptyRoom;
 </script>
 
-<div class="container">
+<div class="container-fluid">
   <div class="card">
     <div class="card-header bg-white">
       <h6 class="mb-0"><i class="fa fa-building"></i>  Listado de Salas Disponibles</h6>
@@ -196,3 +196,7 @@
     />
   </div>
 </div>
+
+<style>
+  
+</style>

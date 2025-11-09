@@ -49,4 +49,13 @@
   ];
 </script>
 
-<MonthlyCalendar {roomData} {reservations} />
+<div class="container-fluid">
+  <div class="card">
+    <div class="card-header bg-white">
+      <h6 class="mb-0"><i class="fa fa-calendar"></i>  Listado de Salas Disponibles</h6>
+    </div>
+    <div class="card-body">
+      <MonthlyCalendar {roomData} {reservations} />
+    </div>
+  </div>
+</div>

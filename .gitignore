@@ -43,3 +43,8 @@ out/
 
 public/fonts
 *.rar
+
+*.pdf
+*.docx
+tmp
+uploads

@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PDF Upload</title>
+</head>
+<body>
+  <h1>Upload PDF Files</h1>
+  
+  <form id="pdfForm">
+    <div>
+      <label for="student">Nombre del Alumno:</label>
+      <input type="text" id="student" name="student" required>
+    </div>
+    
+    <div>
+      <label for="code">Código del Alumno:</label>
+      <input type="number" id="code" name="code" required>
+    </div>
+
+    <div>
+      <label for="pages">Total de Hojas:</label>
+      <input type="number" id="pages" name="pages" required disabled>
+    </div>
+
+    <div>
+      <label for="stakeholder">Interesado:</label>
+      <input type="text" id="stakeholder" name="stakeholder" required>
+    </div>
+    
+    <div>
+      <label for="date">Date:</label>
+      <input type="date" id="date" name="date" required>
+    </div>
+    
+    <div>
+      <label for="files">Upload PDFs:</label>
+      <input type="file" id="files" name="files" accept=".pdf" multiple required>
+    </div>
+    
+    <div>
+      <button type="submit">Generar Reporte</button>
+    </div>
+  </form>
+
+  <div id="tableContainer" style="display: none;">
+    <h2>PDFs Metadata</h2>
+    <table border="1" id="pdfTable">
+      <thead>
+        <tr>
+          <th>Nombre</th>
+          <th>Tamaño</th>
+          <th>Última Modificación</th>
+          <th>Número de Páginas</th>
+          <th>Tipo</th>
+        </tr>
+      </thead>
+      <tbody id="tableBody">
+      </tbody>
+    </table>
+  </div>
+
+  <div id="message" style="display: none; margin-top: 20px; padding: 10px; border-radius: 5px;"></div>
+
+  <script>
+    document.getElementById('pdfForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      const files = document.getElementById('files').files;
+      
+      if (files.length === 0) {
+        alert('Please select at least one PDF file');
+        return;
+      }
+      
+      processPDFs(files);
+    });
+
+    async function processPDFs(files) {
+      const tableBody = document.getElementById('tableBody');
+      const tableContainer = document.getElementById('tableContainer');
+      const inputPages = document.getElementById('pages');
+      const messageDiv = document.getElementById('message');
+
+      let totalPages = 0;
+      const filesData = [];
+      
+      tableBody.innerHTML = '';
+      tableContainer.style.display = 'block';
+      messageDiv.style.display = 'none';
+      
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        
+        try {
+          const arrayBuffer = await file.arrayBuffer();
+          const uint8Array = new Uint8Array(arrayBuffer);
+          
+          const pageCount = await countPDFPages(uint8Array);
+          const pageCountNumber = parseInt(pageCount) || 0;
+          totalPages += pageCountNumber;
+
+          // Store file data for the report
+          filesData.push({
+            name: file.name,
+            size: file.size,
+            sizeFormatted: formatSize(file.size),
+            lastModified: new Date(file.lastModified).toISOString(),
+            pageCount: pageCountNumber,
+            type: file.type || 'application/pdf'
+          });
+          
+          const row = document.createElement('tr');
+          row.innerHTML = `
+            <td>${file.name}</td>
+            <td>${formatSize(file.size)}</td>
+            <td>${new Date(file.lastModified).toLocaleDateString()}</td>
+            <td>${pageCount}</td>
+            <td>${file.type || 'application/pdf'}</td>
+          `;
+          tableBody.appendChild(row);
+        } catch (error) {
+          console.error('Error processing file:', file.name, error);
+          
+          const row = document.createElement('tr');
+          row.innerHTML = `
+            <td>${file.name}</td>
+            <td>${formatSize(file.size)}</td>
+            <td>${new Date(file.lastModified).toLocaleDateString()}</td>
+            <td>Error</td>
+            <td>${file.type || 'application/pdf'}</td>
+          `;
+          tableBody.appendChild(row);
+        }
+      }
+
+      inputPages.value = totalPages;
+
+      // Prepare and send data via AJAX POST
+      await sendReportData(filesData, totalPages);
+    }
+
+    async function sendReportData(filesData, totalPages) {
+      const formData = new FormData();
+      const form = document.getElementById('pdfForm');
+      
+      // Add form data
+      formData.append('student', document.getElementById('student').value);
+      formData.append('code', document.getElementById('code').value);
+      formData.append('pages', totalPages);
+      formData.append('stakeholder', document.getElementById('stakeholder').value);
+      formData.append('date', document.getElementById('date').value);
+      
+      // Add files metadata
+      formData.append('filesData', JSON.stringify(filesData));
+      
+      // Add actual PDF files
+      const files = document.getElementById('files').files;
+      for (let i = 0; i < files.length; i++) {
+        formData.append('pdfFiles', files[i]);
+      }
+
+      try {
+        const response = await fetch('/api/v1/reports', {
+          method: 'POST',
+          body: formData
+        });
+
+        const messageDiv = document.getElementById('message');
+        messageDiv.style.display = 'block';
+        
+        if (response.ok) {
+          // El servidor está devolviendo un PDF binario
+          const pdfBlob = await response.blob();
+          
+          // Crear URL para el blob
+          const pdfUrl = URL.createObjectURL(pdfBlob);
+          
+          // Crear enlace de descarga
+          const downloadLink = document.createElement('a');
+          downloadLink.href = pdfUrl;
+          downloadLink.download = `reporte_${document.getElementById('student').value}_${Date.now()}.pdf`;
+          
+          // Trigger la descarga automáticamente
+          document.body.appendChild(downloadLink);
+          downloadLink.click();
+          document.body.removeChild(downloadLink);
+          
+          // Liberar la URL del blob
+          URL.revokeObjectURL(pdfUrl);
+          
+          messageDiv.style.backgroundColor = '#d4edda';
+          messageDiv.style.color = '#155724';
+          messageDiv.style.border = '1px solid #c3e6cb';
+          messageDiv.innerHTML = '<strong>¡Éxito!</strong> Reporte generado y descargado correctamente.';
+          
+        } else {
+          // Manejar errores del servidor (respuesta JSON)
+          try {
+            const result = await response.json();
+            messageDiv.style.backgroundColor = '#f8d7da';
+            messageDiv.style.color = '#721c24';
+            messageDiv.style.border = '1px solid #f5c6cb';
+            messageDiv.innerHTML = `<strong>Error!</strong> ${result.message || 'Failed to generate report.'}`;
+          } catch (jsonError) {
+            // Si el error no es JSON
+            messageDiv.style.backgroundColor = '#f8d7da';
+            messageDiv.style.color = '#721c24';
+            messageDiv.style.border = '1px solid #f5c6cb';
+            messageDiv.innerHTML = `<strong>Error!</strong> Error del servidor: ${response.status} ${response.statusText}`;
+          }
+        }
+      } catch (error) {
+        console.error('Error sending report:', error);
+        const messageDiv = document.getElementById('message');
+        messageDiv.style.display = 'block';
+        messageDiv.style.backgroundColor = '#f8d7da';
+        messageDiv.style.color = '#721c24';
+        messageDiv.style.border = '1px solid #f5c6cb';
+        messageDiv.innerHTML = '<strong>Error!</strong> Failed to send report to server.';
+      }
+    }
+
+    async function countPDFPages(uint8Array) {
+      try {
+        const pdfjsLib = await loadPDFJS();
+        const pdf = await pdfjsLib.getDocument({ data: uint8Array }).promise;
+        return pdf.numPages;
+      } catch (error) {
+        console.error('Error counting pages:', error);
+        return 'N/A';
+      }
+    }
+
+    function loadPDFJS() {
+      return new Promise((resolve, reject) => {
+        if (window.pdfjsLib) {
+          resolve(window.pdfjsLib);
+          return;
+        }
+
+        const script = document.createElement('script');
+        script.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
+        script.onload = () => {
+          window.pdfjsLib.GlobalWorkerOptions.workerSrc = 
+            'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+          resolve(window.pdfjsLib);
+        };
+        script.onerror = reject;
+        document.head.appendChild(script);
+      });
+    }
+
+    function formatSize(bytes) {
+      if (bytes === 0) return '0 Bytes';
+      const k = 1024;
+      const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+      const i = Math.floor(Math.log(bytes) / Math.log(k));
+      return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+  </script>
+</body>
+</html>

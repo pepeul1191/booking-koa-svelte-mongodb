@@ -1,5 +1,6 @@
 // index.js
 import Koa from 'koa';
+import fs from 'fs';
 import render from 'koa-ejs';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -12,11 +13,25 @@ import helpers from './configs/helpers.js';
 import bootstrap from './configs/bootstrap.js'; 
 import connectDB from './configs/database.js'; // Importar la conexión a la BD
 
+const createFolderIfNotExists = (folderPath) => {
+  if (!fs.existsSync(folderPath)) {
+    fs.mkdirSync(folderPath, { recursive: true });
+    console.log(`📁 Carpeta creada: ${folderPath}`);
+  }
+};
+
 const app = new Koa();
 
 // Obtener el directorio actual
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+// Crear "uploads" y "tmp"
+const uploadsDir = path.join(__dirname, 'uploads');
+const tmpDir = path.join(__dirname, 'tmp');
+
+createFolderIfNotExists(uploadsDir);
+createFolderIfNotExists(tmpDir);
 
 // Servir archivos estáticos desde la carpeta public
 app.use(serve(path.join(__dirname, 'public')));

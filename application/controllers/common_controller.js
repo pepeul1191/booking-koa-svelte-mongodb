@@ -9,6 +9,10 @@ router.get('/', requireLogin, async (ctx) => {
   await ctx.render('common/application', { mensaje: '¡Hola, Koa con EJS y controladores!' });
 });
 
+router.get('/test', requireLogin, async (ctx) => {
+  await ctx.render('common/test', { mensaje: '¡Hola, Koa con EJS y controladores!' });
+});
+
 // Definir otra ruta
 router.get('/sign-in', redirectIfLoggedIn, async (ctx) => {
   var messages = ""; 

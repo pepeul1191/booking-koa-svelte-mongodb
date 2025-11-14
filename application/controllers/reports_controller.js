@@ -5,35 +5,35 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import PDFMerger from 'pdf-merger-js';
 import { createReport } from 'docx-templates';
-import puppeteer from 'puppeteer';
+import libre from 'libreoffice-convert';
+import { promisify } from 'util'; 
+import { PDFNet } from '@pdftron/pdfnet-node';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+libre.convertAsync = promisify(libre.convert);
+
 const router = new Router();
 
 // Helper function to convert DOCX to HTML and then to PDF using Puppeteer
-async function convertDocxToPdfWithPuppeteer(docxPath, pdfPath) {
-  const mammoth = await import('mammoth');
-  const conversionResult = await mammoth.default.convert({ path: docxPath });
-  const htmlContent = conversionResult.value;
-
-  const browser = await puppeteer.launch({
-    headless: 'new',
-    args: ['--no-sandbox', '--disable-setuid-sandbox']
-  });
-  const page = await browser.newPage();
-  
-  await page.setContent(htmlContent, { waitUntil: 'networkidle0' });
-  
-  await page.pdf({ 
-    path: pdfPath,
-    format: 'A4',
-    margin: { top: '1cm', right: '1cm', bottom: '1cm', left: '1cm' },
-    printBackground: true,
-  });
-  
-  await browser.close();
+async function convertDocxToPdf(docxPath, pdfPath) {
+  try {
+    // Read the DOCX file as a Buffer
+    const docxBuf = await fs.readFile(docxPath);
+    
+    // Convert the file to PDF
+    let pdfBuf = await libre.convertAsync(docxBuf, '.pdf', undefined);
+    
+    // Write the converted PDF buffer to the output file
+    await fs.writeFile(pdfPath, pdfBuf);
+    
+    console.log('Conversión DOCX a PDF completada exitosamente');
+    return true;
+  } catch (error) {
+    console.error('Error en la conversión DOCX a PDF:', error);
+    throw error; // Re-throw the error to be handled by the route's catch block
+  }
 }
 
 router.post('/api/v1/reports', async (ctx) => {
@@ -143,7 +143,7 @@ router.post('/api/v1/reports', async (ctx) => {
 
     // Convert edited DOCX to PDF using Puppeteer
     const coverPdfPath = path.join(tmpFolderPath, 'portada.pdf');
-    await convertDocxToPdfWithPuppeteer(editedDocxPath, coverPdfPath);
+    await convertDocxToPdf(editedDocxPath, coverPdfPath);
 
     // Merge all PDFs
     const pdfMerger = new PDFMerger();

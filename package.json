@@ -33,6 +33,7 @@
     "mammoth": "^1.11.0",
     "mongoose": "^8.19.2",
     "pdf-merger-js": "^5.1.2",
+    "pdfjs-dist": "^5.4.394",
     "pdfkit": "^0.17.2",
     "puppeteer": "^24.30.0",
     "simplemde": "^1.11.2",

@@ -106,6 +106,7 @@
       fileName: file.name,
       fileSize: formatFileSize(file.size),
       uploadDate: new Date().toLocaleDateString('es-ES'),
+      file: file,
     }));
     
     // Emitir evento para guardar

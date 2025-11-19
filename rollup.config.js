@@ -36,6 +36,34 @@ const App = {
 	}
 };
 
+const Dusar = {
+	input: 'src/entries/dusar.js',
+	output: {
+		sourcemap: true,
+		format: 'iife',
+		name: 'dusar',
+		file: production ? 'public/dist/dusar.min.js' : 'public/dist/dusar.js',
+	},
+	plugins: [
+		svelte({
+			compilerOptions: {
+				dev: !production
+			}
+		}),
+		css({ output: production ?  'dusar.min.css' : 'dusar.css' }),
+		resolve({
+			browser: true,
+			dedupe: ['svelte'],
+			exportConditions: ['svelte']
+		}),
+		commonjs(),
+		production && terser()
+	],
+	watch: {
+		clearScreen: false
+	}
+};
+
 const Login = {
 	input: 'src/entries/login.js',
 	output: {
@@ -108,4 +136,4 @@ const Vendor = {
 	}
 };
 
-export default [App, Vendor, Login, ];
+export default [App, Vendor, Login, Dusar, ];

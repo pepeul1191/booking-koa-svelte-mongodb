@@ -16,6 +16,24 @@ libre.convertAsync = promisify(libre.convert);
 
 const router = new Router();
 
+async function countPages(pdfPath) {
+  try {
+    // Leer el archivo PDF
+    const pdfBytes = await fs.readFile(pdfPath);
+    
+    // Cargar el documento PDF
+    const pdfDoc = await PDFDocument.load(pdfBytes);
+    
+    // Obtener el número de páginas
+    const pageCount = pdfDoc.getPageCount();
+    
+    return pageCount;
+  } catch (error) {
+    console.error(`Error al contar páginas del PDF ${pdfPath}:`, error);
+    throw error;
+  }
+}
+
 async function addFooterAndHeader(pdfPath, startPage) {
   let currentPage = startPage;
 
@@ -88,7 +106,7 @@ async function addFooterAndHeader(pdfPath, startPage) {
 
   return currentPage;
 }
-  
+
 // Helper function to convert DOCX to HTML and then to PDF using Puppeteer
 async function convertDocxToPdf(docxPath, pdfPath) {
   try {
@@ -145,11 +163,18 @@ router.post('/api/v1/reports', async (ctx) => {
     // Process uploaded PDFs
     const pdfFiles = Array.isArray(files.pdfFiles) ? files.pdfFiles : [files.pdfFiles];
     const savedPdfPaths = [];
-    
+    let totalPages = 0;
+
     for (let i = 0; i < pdfFiles.length; i++) {
       const pdfFile = pdfFiles[i];
       const pdfPath = path.join(tmpFolderPath, `original_${i}_${pdfFile.originalFilename}`);
       await fs.writeFile(pdfPath, await fs.readFile(pdfFile.filepath));
+      // contar paginas
+      const pdfBytes = await fs.readFile(pdfPath);
+      const pdfDoc = await PDFDocument.load(pdfBytes);
+      const pageCount = pdfDoc.getPageCount();
+      totalPages += pageCount;
+
       savedPdfPaths.push(pdfPath);
     }
 
@@ -187,10 +212,7 @@ router.post('/api/v1/reports', async (ctx) => {
     const editedDocxPath = path.join(tmpFolderPath, 'documento_editado.docx');
     const templateBuffer = await fs.readFile(templatePath);
     
-    // Preparar datos adicionales para los comandos de la plantilla
-    const totalPages = pdfFiles.length; // O calcula el total de páginas de todos los PDFs si lo necesitas
-    
-    const reportBuffer = await createReport({
+    let reportBuffer = await createReport({
       template: templateBuffer,
       data: {
         student: formData.student,

@@ -7,7 +7,7 @@ import PDFMerger from 'pdf-merger-js';
 import { createReport } from 'docx-templates';
 import libre from 'libreoffice-convert';
 import { promisify } from 'util'; 
-import { PDFNet } from '@pdftron/pdfnet-node';
+import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -16,6 +16,79 @@ libre.convertAsync = promisify(libre.convert);
 
 const router = new Router();
 
+async function addFooterAndHeader(pdfPath, startPage) {
+  let currentPage = startPage;
+
+  // Leer el PDF existente
+  const pdfBytes = await fs.readFile(pdfPath);
+  const pdfDoc = await PDFDocument.load(pdfBytes);
+
+  // Para usar Calibri necesitamos cargar la fuente desde un archivo
+  // Asumiendo que tienes el archivo calibri.ttf en tu proyecto
+  const calibriFontPath = path.join(process.cwd(), 'fonts', 'calibri.ttf');
+  let font;
+  
+  try {
+    const calibriFontBytes = await fs.readFile(calibriFontPath);
+    font = await pdfDoc.embedFont(calibriFontBytes);
+  } catch (error) {
+    console.warn('No se pudo cargar Calibri, usando Helvetica como fallback');
+    font = await pdfDoc.embedFont(StandardFonts.Helvetica);
+  }
+
+  const pages = pdfDoc.getPages();
+
+  // Iterar sobre cada página
+  for (let i = 0; i < pages.length; i++) {
+    const page = pages[i];
+    const { width, height } = page.getSize();
+
+    // Texto del header: número de página
+    const headerText = `${currentPage}`;
+    const headerTextWidth = font.widthOfTextAtSize(headerText, 11);
+    const headerX = (width - headerTextWidth) / 2; // Centrado
+    const headerY = height - 30; // 30 puntos desde arriba
+
+    // Dibujar el header
+    page.drawText(headerText, {
+      x: headerX,
+      y: headerY,
+      size: 11,
+      font: font,
+      color: rgb(0, 0, 0),
+    });
+
+    // Texto del footer (dividido en líneas)
+    const footerLines = [
+      'Av. Javier Prado Este s/n, Monterrico, Lima 33, Perú. Apartado Postal 852, Lima 100, Perú.',
+      'Teléfono: 437-6767, Fax: 437-8066 Web Site: http://www.ulima.edu.pe'
+    ];
+
+    // Dibujar cada línea del footer
+    footerLines.forEach((line, index) => {
+      const lineTextWidth = font.widthOfTextAtSize(line, 8);
+      const lineX = (width - lineTextWidth) / 2; // Centrado
+      const lineY = 30 - (index * 12); // Espaciado entre líneas
+
+      page.drawText(line, {
+        x: lineX,
+        y: lineY,
+        size: 8,
+        font: font,
+        color: rgb(0, 0, 0),
+      });
+    });
+
+    currentPage++;
+  }
+
+  // Guardar el PDF modificado
+  const modifiedPdfBytes = await pdfDoc.save();
+  await fs.writeFile(pdfPath, modifiedPdfBytes);
+
+  return currentPage;
+}
+  
 // Helper function to convert DOCX to HTML and then to PDF using Puppeteer
 async function convertDocxToPdf(docxPath, pdfPath) {
   try {
@@ -149,7 +222,9 @@ router.post('/api/v1/reports', async (ctx) => {
     const pdfMerger = new PDFMerger();
     await pdfMerger.add(coverPdfPath);
 
+    let pages = 1;
     for (const pdfPath of savedPdfPaths) {
+      pages = await addFooterAndHeader(pdfPath, pages);
       await pdfMerger.add(pdfPath);
     }
 

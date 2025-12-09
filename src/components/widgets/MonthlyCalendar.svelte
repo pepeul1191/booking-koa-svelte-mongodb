@@ -10,6 +10,13 @@
     reservationIds: []
   };
 
+  export let options = {
+    id: 'id',
+    name: 'name',
+    data: [],
+    label: 'Opciones de búsquda'
+  };
+
   export let reservations = [];
 
   let currentDate = new Date();
@@ -254,7 +261,7 @@
 
     <!-- Selector de ambiente -->
     <div class="d-flex align-items-center ms-auto">
-      <span class="me-2">Selecciona un Ambiente:</span>
+      <span class="me-2">{options.label}:</span>
       <select 
         id="option-select" 
         class="form-select" 
@@ -262,10 +269,12 @@
         bind:value={selectedOption}
         on:change={handleOptionChange}
       >
-        <option value="" disabled selected>-- Selecciona un ambiente --</option>
-        <option value="option1">Opción 1</option>
-        <option value="option2">Opción 2</option>
-        <option value="option3">Opción 3</option>
+        <option value="" disabled selected>-- {options.label} --</option>
+        {#if Array.isArray(options.data)}
+          {#each options.data as option}
+            <option value="{option[options.id]}">{option[options.name]}</option>
+          {/each}
+        {/if}
       </select>
     </div>
 

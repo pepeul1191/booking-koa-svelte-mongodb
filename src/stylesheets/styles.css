@@ -12,6 +12,12 @@ body {
     margin: 0;
 }
 
+
+nav{
+  padding-left: 15px !important;
+  padding-right: 15px !important;
+}
+
 :root {
     --bs-primary: #ff5216; /* Naranja brillante */
     --bs-secondary: #1a1a1a; /* Gris muy oscuro */

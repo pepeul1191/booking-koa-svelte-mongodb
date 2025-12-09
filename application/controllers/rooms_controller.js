@@ -10,7 +10,8 @@ export const fetchAll = async (ctx) => {
       per_page = 10,
       search, // Mantener como search (snake_case del query param)
       min_capacity,
-      max_capacity
+      max_capacity,
+      all = false,
     } = ctx.query;
 
     // Llamar al servicio con los parámetros convertidos
@@ -19,7 +20,8 @@ export const fetchAll = async (ctx) => {
       per_page: parseInt(per_page),
       searchQuery: search, // Pasar como searchQuery que espera el servicio
       minCapacity: min_capacity ? parseInt(min_capacity) : null,
-      maxCapacity: max_capacity ? parseInt(max_capacity) : null
+      maxCapacity: max_capacity ? parseInt(max_capacity) : null,
+      all
     });
 
     // CORRECCIÓN: El servicio devuelve 'success', no 'status'

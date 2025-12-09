@@ -1,5 +1,7 @@
 <script>
+  import { onMount } from 'svelte';
   import MonthlyCalendar from '../../widgets/MonthlyCalendar.svelte';
+  import { listRoomsNames } from '../../../services/room_service.js';
 
   // Datos de ejemplo
   const roomData = {
@@ -22,6 +24,13 @@
     ],
     reservationIds: []
   };
+
+  let calendarOptions = {
+    id: '_id',
+    name: 'name',
+    data: [],
+    label: 'Seleccione un Ambiente'
+  }
 
   const reservations = [
     {
@@ -47,6 +56,22 @@
       createdBy: "user1"
     }
   ];
+
+  onMount(() => {
+    listRoomsNames()
+      .then(function(response) {
+        // Éxito
+        calendarOptions.data = response.data.data;
+      })
+      .catch(function(error) {
+        // Error
+        console.error('Error obteniendo salas:', error);
+      })
+      .finally(function() {
+        // Se ejecuta siempre (éxito o error)
+        console.log('Llamada completada');
+      });
+  });
 </script>
 
 <div class="container-fluid">
@@ -55,7 +80,7 @@
       <h6 class="mb-0"><i class="fa fa-calendar"></i>  Listado de Salas Disponibles</h6>
     </div>
     <div class="card-body">
-      <MonthlyCalendar {roomData} {reservations} />
+      <MonthlyCalendar {roomData} {reservations} options={calendarOptions}/>
     </div>
   </div>
 </div>

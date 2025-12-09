@@ -3,6 +3,7 @@
   import MonthlyCalendar from '../../widgets/MonthlyCalendar.svelte';
   import { listRoomsNames } from '../../../services/room_service.js';
 
+  let calendar;
   // Datos de ejemplo
   const roomData = {
     capacity: 12,
@@ -72,6 +73,11 @@
         console.log('Llamada completada');
       });
   });
+
+  function handleChangeOption(event) {
+    console.log('Evento recibido del hijo:', event.detail);
+    
+  }
 </script>
 
 <div class="container-fluid">
@@ -80,7 +86,12 @@
       <h6 class="mb-0"><i class="fa fa-calendar"></i>  Listado de Salas Disponibles</h6>
     </div>
     <div class="card-body">
-      <MonthlyCalendar {roomData} {reservations} options={calendarOptions}/>
+      <MonthlyCalendar
+        {roomData} 
+        {reservations} 
+        options={calendarOptions}
+        on:optionChange={handleChangeOption} 
+        bind:this={calendar} />
     </div>
   </div>
 </div>

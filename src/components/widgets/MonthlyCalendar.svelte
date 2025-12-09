@@ -1,7 +1,9 @@
 <!-- MonthlyCalendar.svelte -->
 <script>
-  import { onMount } from 'svelte';
+  import { onMount, createEventDispatcher } from 'svelte';
   import { Modal } from 'bootstrap';
+
+  const dispatch = createEventDispatcher();
 
   export let roomData = {
     capacity: 0,
@@ -239,6 +241,12 @@
   // Manejar cambio en el select
   const handleOptionChange = (event) => {
     selectedOption = event.target.value;
+
+    dispatch('optionChange', {
+      value: selectedOption,
+      
+      event: event
+    });
   };
 
   $: days = getDaysInMonth();

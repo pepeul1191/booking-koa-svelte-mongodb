@@ -1,19 +1,15 @@
-// configs/bootstrap.js
+//configs/bootstrap.js
 import Router from 'koa-router';
-import commonController from '../application/controllers/common_controller.js';
-import systemController from '../application/controllers/systems_controller.js';
-import roomController from '../application/controllers/rooms_controller.js';
+import commonRoutes from '../application/routes/common_routes.js';
+import roomRoutes from '../application/routes/rooms_routes.js'; 
 import reportController from '../application/controllers/reports_controller.js';
-
-import Room from '../application/models/room.js'; 
-import Reservation from '../application/models/reservation.js';
+import './models.js';
 
 const router = new Router();
 
-// Montar los controladores
-router.use(commonController.routes()).use(commonController.allowedMethods());
-router.use(systemController.routes()).use(systemController.allowedMethods());
-router.use(roomController.routes()).use(roomController.allowedMethods());
+// Montar las rutas
+router.use(commonRoutes.routes()).use(commonRoutes.allowedMethods());
 router.use(reportController.routes()).use(reportController.allowedMethods());
+router.use(roomRoutes.routes()).use(roomRoutes.allowedMethods());
 
 export default router;

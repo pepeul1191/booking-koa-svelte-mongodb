@@ -1,11 +1,8 @@
 // application/controllers/system_controller.js
-import Router from 'koa-router';
 import roomsService from '../services/rooms_service.js'; 
 import mongoose from 'mongoose';
 
-const router = new Router();
-
-router.get('/api/v1/rooms', async (ctx) => {
+export const fetchAll = async (ctx) => {
   try {
     // Obtener query params en snake_case y convertirlos a camelCase
     const {
@@ -37,9 +34,9 @@ router.get('/api/v1/rooms', async (ctx) => {
       timestamp: new Date().toISOString()
     };
   }
-});
+};
 
-router.get('/api/v1/rooms/:id', async (ctx) => {
+export const fetchOneById = async (ctx) => {
   try {
     const { id } = ctx.params;  // Obtén el room ID
     const { month } = ctx.query;  // Obtén el parámetro de mes (opcional)
@@ -68,9 +65,9 @@ router.get('/api/v1/rooms/:id', async (ctx) => {
       timestamp: new Date().toISOString()
     };
   }
-});
+};
 
-router.post('/api/v1/rooms', async (ctx) => {
+export const create = async (ctx) => {
   try {
     const roomData = ctx.request.body;
 
@@ -154,9 +151,9 @@ router.post('/api/v1/rooms', async (ctx) => {
       timestamp: new Date().toISOString()
     };
   }
-});
+};
 
-router.put('/api/v1/rooms/:id', async (ctx) => {
+export const update = async (ctx) => {
   try {
     const roomId = ctx.params.id;
     const roomData = ctx.request.body;
@@ -264,9 +261,9 @@ router.put('/api/v1/rooms/:id', async (ctx) => {
       timestamp: new Date().toISOString()
     };
   }
-});
+};
 
-router.delete('/api/v1/rooms/:id', async (ctx) => {
+export const deleteOne = async (ctx) => {
   try {
     const roomId = ctx.params.id;
 
@@ -325,6 +322,4 @@ router.delete('/api/v1/rooms/:id', async (ctx) => {
       timestamp: new Date().toISOString()
     };
   }
-});
-
-export default router;
+};

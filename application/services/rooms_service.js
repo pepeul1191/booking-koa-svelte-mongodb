@@ -10,7 +10,6 @@ const getRooms = async ({
 } = {}) => {
   try {
     let query = {};
-
     // Aplicar filtro de búsqueda por nombre
     if (searchQuery && searchQuery.trim() !== '') {
       query.$or = [

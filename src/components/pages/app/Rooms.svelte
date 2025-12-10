@@ -4,7 +4,7 @@
   import DataTable from '../../widgets/DataTable.svelte'; 
   // Asume que tienes un componente o función para mostrar alertas
   import Alert from '../../widgets/Alert.svelte'; 
-  import RoomFormModal from './RoomFormModal.svelte'; // Importa el componente del modal
+  import RoomFormModal from '../../modals/RoomFormModal.svelte'; // Importa el componente del modal
   import { navigate } from 'svelte-routing'; // Asumiendo que usas svelte-routing
 
   // --- CONFIGURACIÓN DEL ENDPOINT Y AUTENTICACIÓN ---

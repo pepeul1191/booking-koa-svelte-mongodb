@@ -56,7 +56,7 @@ export const fetchOneById = async (ctx) => {
     }
 
     ctx.status = 200;
-    ctx.body = { success: true, room };
+    ctx.body = { success: true, data: room };
 
   } catch (error) {
     console.error(error);

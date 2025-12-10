@@ -1,4 +1,5 @@
 <!-- MonthlyCalendar.svelte -->
+<svelte:options accessors={true} />
 <script>
   import { onMount, createEventDispatcher } from 'svelte';
   import { Modal } from 'bootstrap';
@@ -110,7 +111,8 @@
   };
 
   // Función para generar los días del mes
-  const getDaysInMonth = () => {
+  export const getDaysInMonth = () => {
+
     const year = currentDate.getFullYear();
     const month = currentDate.getMonth();
     
@@ -158,7 +160,6 @@
         reservations: getReservationsForDate(date)
       });
     }
-    
     return days;
   };
 
@@ -190,7 +191,10 @@
     
     // Mostrar modal con detalles
     if (detailsModal) {
-      detailsModal.show();
+      dispatch('openModal', {
+        value: day,
+        event: event
+      });
     }
   };
 
@@ -223,6 +227,7 @@
 
   // Obtener texto para el tooltip de disponibilidad
   const getAvailabilityTooltip = (availability) => {
+    return null;
     switch (availability.type) {
       case 'available':
         return `Disponible: ${minutesToTime(availability.open)} - ${minutesToTime(availability.close)}`;
@@ -244,10 +249,14 @@
 
     dispatch('optionChange', {
       value: selectedOption,
-      
       event: event
     });
   };
+
+  export const updateDays = () => {
+    days = getDaysInMonth();
+    console.log(days)
+  }
 
   $: days = getDaysInMonth();
   $: currentMonthText = `${monthNames[currentDate.getMonth()]} ${currentDate.getFullYear()}`;

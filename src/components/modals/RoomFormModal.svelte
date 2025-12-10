@@ -1,7 +1,7 @@
 <script>
   import { onMount, createEventDispatcher, afterUpdate } from 'svelte';
-  import { createRoom, editRoom } from '../../../services/room_service.js';
-  import Alert from '../../widgets/Alert.svelte'; 
+  import { createRoom, editRoom } from '../../services/room_service.js';
+  import Alert from '../widgets/Alert.svelte'; 
   import { Modal } from 'bootstrap';
   
   // Props del componente

@@ -1,9 +1,11 @@
 <script>
   import { onMount } from 'svelte';
   import MonthlyCalendar from '../../widgets/MonthlyCalendar.svelte';
-  import { listRoomsNames } from '../../../services/room_service.js';
+  import ResevationsModal from '../../modals/ResevationsModal.svelte'; // Importa el componente del modal
+  import { listRoomsNames, getRoomDetail } from '../../../services/room_service.js';
 
-  let calendar;
+  let calendarRef;
+  let modalRef;
   // Datos de ejemplo
   const roomData = {
     capacity: 12,
@@ -60,24 +62,52 @@
 
   onMount(() => {
     listRoomsNames()
-      .then(function(response) {
+      .then((response) => {
         // Éxito
         calendarOptions.data = response.data.data;
       })
-      .catch(function(error) {
+      .catch((error) => {
         // Error
         console.error('Error obteniendo salas:', error);
       })
-      .finally(function() {
+      .finally(() => {
         // Se ejecuta siempre (éxito o error)
         console.log('Llamada completada');
       });
   });
 
   function handleChangeOption(event) {
-    console.log('Evento recibido del hijo:', event.detail);
-    
+    console.log('Evento recibido del hijo:', event.detail.value);
+    const _id = event.detail.value;
+    getRoomDetail(_id).then((response) => {
+      // Éxito
+      console.log('Detalle de la sala:', response.data.data);
+      calendarRef.roomData.availabilities = response.data.data.availabilities;
+      calendarRef.updateDays();
+      console.log(calendarRef.roomData)
+    })
+    .catch((error) => {
+        // Error
+      console.error('Error obteniendo el detalle de la sala:', error);
+    })
   }
+
+  // Función para cerrar el modal
+  const handleCloseModal = () => {
+    modalRef.hide();
+  };
+
+  // Función para manejar el envío exitoso del formulario
+  const handleFormSuccess = (event) => {
+    modalRef.hide();
+    // mostrar alerta
+    console.log(event)
+  };
+
+  const handleOpenModal = (event) => {
+    console.log(event.detail)
+    modalRef.show();
+  };
 </script>
 
 <div class="container-fluid">
@@ -91,7 +121,15 @@
         {reservations} 
         options={calendarOptions}
         on:optionChange={handleChangeOption} 
-        bind:this={calendar} />
+        on:openModal={handleOpenModal} 
+        bind:this={calendarRef} />
     </div>
+
+    <ResevationsModal
+      bind:this={modalRef}
+      on:close={handleCloseModal}
+      on:success={handleFormSuccess}
+      size="lg"
+    />
   </div>
 </div>

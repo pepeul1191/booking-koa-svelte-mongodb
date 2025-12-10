@@ -192,7 +192,7 @@
     // Mostrar modal con detalles
     if (detailsModal) {
       dispatch('openModal', {
-        value: day,
+        value: roomData,
         event: event
       });
     }

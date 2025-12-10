@@ -81,10 +81,10 @@
     const _id = event.detail.value;
     getRoomDetail(_id).then((response) => {
       // Éxito
-      console.log('Detalle de la sala:', response.data.data);
-      calendarRef.roomData.availabilities = response.data.data.availabilities;
+      //console.log('Detalle de la sala:', response.data.data);
+      calendarRef.roomData = response.data.data;
       calendarRef.updateDays();
-      console.log(calendarRef.roomData)
+      //console.log(calendarRef.roomData)
     })
     .catch((error) => {
         // Error
@@ -101,12 +101,13 @@
   const handleFormSuccess = (event) => {
     modalRef.hide();
     // mostrar alerta
-    console.log(event)
+    console.log(event);
   };
 
   const handleOpenModal = (event) => {
-    console.log(event.detail)
-    modalRef.show();
+    const roomData = event.detail.value;
+    modalRef.roomData = roomData;
+    modalRef.show(roomData);
   };
 </script>
 
